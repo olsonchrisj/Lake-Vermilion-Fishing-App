@@ -4,17 +4,17 @@
 // scraped directly from each guide's own site — no AI summarizing involved.
 const AUTO_REPORTS = [
   {
-    "date": "2026-09-08",
-    "source": "Patriot Guide Service (Justin Chromy)",
-    "sourceUrl": "https://www.patriotguideserviceoflakevermilion.com/09-08-26-lake-vermilion-fishing-report/",
-    "waterTempF": null,
-    "rawText": "Another solid week of fishing on Vermilion! Some bigger fish are starting to show up! EAST END WALLEYES: The best bite on the east end has been along the sides and bottoms of rocks in 15 to 25 feet of water. Oftentimes, this is a sandy area adjacent to the rocks that is holding the fish. We have been targeting these fish with 1/16th or 1/8th oz Tungsten jigs tipped with crawlers, leeches, or minnows. A couple of fish have come on minnows, but the crawlers and leeches are still out producing them. There are still some fish out in the mud basins anywhere from 17-34 feet of water that can be caught pulling Leadcore. While Leadcore hasn't really been our approach, we'd recommend number 5 Flicker Shads and Shad Raps trolled at 2.5 miles per hour. One important thing with the Leadcore bite is to target fish that haven't been fished. If they haven't seen any crankbaits lately, they are more likely to hit your bait. WEST END WALLEYES: The west end walleye bite is pretty similar to the east end with the best bite being on the rocks in 15 to 25 feet of water. Jigs tipped with crawlers or leeches have been the ticket as of late. Expect the minnow bite to pick up once we have a week of cooler weather. Some walleyes can be lead cored on the west end as well. Our best depths have been 20-25 feet. We have been using the same number 5 Flicker Shads and Shad Raps as on the east end, but it is not a bad idea to try bigger baits for bigger fish on the west end."
-  },
-  {
     "date": "2026-08-31",
     "source": "Fishing with Z (Zach Hrvol)",
     "sourceUrl": "https://fishingwithz.com/week-16-august-24-31-2026/",
     "waterTempF": "69–72",
-    "rawText": "Week #16: 8/24-8/31, 2026 Water temps: 69-72 Another inconsistent week of fishing but we managed to put quality fish in the boat! We didn't catch…"
+    "rawText": "Week #16: 8/24-8/31, 2026 Water temps: 69-72 Another inconsistent week of fishing but we managed to put quality fish in the boat! We didn’t catch…"
+  },
+  {
+    "date": "2026-09-08",
+    "source": "Patriot Guide Service (Justin Chromy)",
+    "sourceUrl": "https://www.patriotguideserviceoflakevermilion.com/09-08-26-lake-vermilion-fishing-report/",
+    "waterTempF": null,
+    "rawText": "Another solid week of fishing on Vermilion! Some bigger fish are starting to show up! EAST END WALLEYES: The best bite on the east end has been along the sides and bottoms of rocks in 15 to 25 feet of water. Oftentimes, this is a sandy area adjacent to the rocks that is holding the fish. We have been targeting these fish with 1/16th or 1/8th oz Tungsten jigs tipped with crawlers, leeches, or minnows. A couple of fish have come on minnows, but the crawlers and leeches are still out producing them. There are still some fish out in the mud basins anywhere from 17-34 feet of water that can be caught pulling Leadcore. While Leadcore hasn’t really been our approach, we’d recommend number 5 Flicker Shads and Shad Raps trolled at 2.5 miles per hour. One important thing with the Leadcore bite is to target fish that haven’t been fished. If they haven’t seen any crankbaits lately, they are more likely to hit your bait. WEST END WALLEYES: The west end walleye bite is pretty similar to the east end with the best bite being on the rocks in 15 to 25 feet of water. Jigs tipped with crawlers or leeches have been the ticket as of late. Expect the minnow bite to pick up once we have a week of cooler weather. Some walleyes can be lead cored on the west end as well. Our best depths have been 20-25 feet. We have been using the same number 5 Flicker Shads and Shad Raps as on the east end, but it is not a bad idea to try bigger baits for bigger fish on the west end. Justin only has 3 available trips left in September! They are the afternoons of September 16th, 17th, and 30th. Come experience fall on beautiful Lake Vermilion! Give Justin a call at 218-820-0335 to grab those last spots, or book online to get in on the big fish bite in October!"
   }
 ];
