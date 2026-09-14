@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Lake Vermilion Fishing</title>
+<meta name="theme-color" content="#5522DD" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/icon.svg" />
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header id="app-header">
+  <div class="title-block">
+    <h1>Lake Vermilion</h1>
+    <span id="updated-label"></span>
+  </div>
+  <button id="report-toggle" class="icon-btn" aria-label="Toggle report panel">Report</button>
+</header>
+
+<div id="map"></div>
+
+<div id="layer-controls">
+  <button id="basemap-toggle" class="pill-btn">Satellite</button>
+  <button id="bathy-toggle" class="pill-btn active">Bathymetry</button>
+  <button id="locate-toggle" class="pill-btn">My Location</button>
+</div>
+
+<div id="species-filter"></div>
+
+<div id="report-panel" class="sheet hidden">
+  <div class="sheet-handle"></div>
+  <h2>Current Report &amp; Conditions</h2>
+  <div id="weather-block">
+    <p class="muted">Loading weather…</p>
+  </div>
+  <div id="report-block"></div>
+</div>
+
+<div id="spot-panel" class="sheet hidden">
+  <div class="sheet-handle"></div>
+  <div id="spot-detail"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="data.js?v=8"></script>
+<script src="bathymetry.js"></script>
+<script src="reports.auto.js"></script>
+<script src="app.js?v=6"></script>
+</body>
+</html>

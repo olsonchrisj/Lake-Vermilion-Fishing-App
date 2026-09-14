@@ -1,0 +1,1 @@
+Superseded by bathymetry.js (same data, wrapped as a JS file so it can load via a <script> tag instead of fetch()). This file is no longer used by the app.
