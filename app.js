@@ -2,6 +2,7 @@
 
 const map = L.map('map', { zoomControl: false, attributionControl: true });
 L.control.zoom({ position: 'bottomright' }).addTo(map);
+map.attributionControl.setPrefix(false); // drop the clickable Leaflet link, keep required OSM credit
 
 function fitLake() {
   map.invalidateSize();
