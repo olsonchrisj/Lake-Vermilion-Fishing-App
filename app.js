@@ -281,11 +281,28 @@ document.getElementById('report-toggle').addEventListener('click', () => {
   if (willOpen) reportPanel.classList.remove('hidden');
 });
 
+// Picks a readable text color (near-black or white) for a colored background,
+// using a rough perceptual-luminance formula — good enough to decide "is this
+// background light or dark" without needing full WCAG contrast math. Fixes tags
+// like Perch's gold, where white text was hard to read.
+function idealTextColor(hex) {
+  const c = hex.replace('#', '');
+  const r = parseInt(c.substr(0, 2), 16), g = parseInt(c.substr(2, 2), 16), b = parseInt(c.substr(4, 2), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.55 ? '#12141c' : '#ffffff';
+}
+
 function openSpotPanel(spot) {
   closeAllSheets();
-  const tags = spot.species.map(s =>
-    `<span class="species-tag" style="background:${SPECIES_INFO[s].color}">${SPECIES_INFO[s].label}</span>`
-  ).join('');
+  const tags = spot.species.map(s => {
+    const info = SPECIES_INFO[s];
+    return `<span class="species-tag" style="background:${info.color};color:${idealTextColor(info.color)}">${info.label}</span>`;
+  }).join('');
+  let todayFitHtml = '';
+  if (window.__todayFactors) {
+    const { reason } = scoreSpot(spot, window.__todayFactors);
+    todayFitHtml = `<p class="spot-label">Today's fit</p><p>${reason.charAt(0).toUpperCase()}${reason.slice(1)}.</p>`;
+  }
   document.getElementById('spot-detail').innerHTML = `
     <p class="spot-title">${spot.name}</p>
     <p class="spot-structure">${spot.structure}</p>
@@ -296,6 +313,7 @@ function openSpotPanel(spot) {
     <p>${spot.technique}</p>
     <p class="spot-label">Best conditions</p>
     <p>${spot.bestConditions}</p>
+    ${todayFitHtml}
   `;
   spotPanel.classList.remove('hidden');
   map.setView([spot.lat, spot.lon], Math.max(map.getZoom(), 13));
@@ -304,7 +322,11 @@ function openSpotPanel(spot) {
 map.on('click', closeAllSheets);
 
 // --- Report panel content (static from data.js) ---
-document.getElementById('updated-label').textContent = `Updated ${LAST_UPDATED}`;
+// This reflects when the spot recommendations/analysis were last revised by hand —
+// it's intentionally NOT tied to the daily report scraper (see the "Automation
+// last checked" line in the report panel for that; they're different things and
+// conflating them was confusing).
+document.getElementById('updated-label').textContent = `Spots updated ${LAST_UPDATED}`;
 
 // Only show reports from the last REPORT_MAX_AGE_DAYS days — an old report showing
 // up as if it were current is worse than not showing one at all. If every report on
@@ -371,9 +393,27 @@ const historyHtml = HISTORICAL_REPORTS.length > 0 ? `
   </div>
 ` : '';
 
+// Proof the daily scraper actually ran, independent of whether it found anything
+// new — reports.checked.js is rewritten every single run, unlike reports.auto.js
+// which only changes when new content shows up. Answers "is this even working?"
+// at a glance instead of leaving it ambiguous.
+let checkedHtml = '';
+if (typeof REPORTS_CHECKED_AT !== 'undefined') {
+  const checkedDate = new Date(REPORTS_CHECKED_AT);
+  const formatted = checkedDate.toLocaleString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit'
+  });
+  const failed = (typeof REPORTS_CHECK_STATUS !== 'undefined' ? REPORTS_CHECK_STATUS : []).filter(s => !s.ok);
+  const warn = failed.length
+    ? ` — <span class="stale-flag">${failed.map(f => f.source).join(', ')} didn't respond, will retry tomorrow</span>`
+    : '';
+  checkedHtml = `<p class="muted" style="margin-top:10px;font-size:11.5px;">Automation last checked for new reports: ${formatted}${warn}</p>`;
+}
+
 document.getElementById('report-block').innerHTML = `
   ${reportsHtml}
   ${historyHtml}
+  ${checkedHtml}
 `;
 
 // --- Weather angle: pure rule-based reasoning over the live NWS forecast, no AI ---
@@ -403,7 +443,17 @@ function maxWindMph(speedStr) {
   const nums = (speedStr.match(/\d+/g) || []).map(Number);
   return nums.length ? Math.max(...nums) : 0;
 }
-function computeWeatherAngle(periods) {
+// Pulls the handful of "today" signals out of the live forecast that actually
+// drive fish behavior in established, well-known ways: wind speed (calm vs.
+// wind-blown structure), a front/pressure-instability proxy (see note below),
+// and light level (bright/calm vs. overcast, from the forecast's own wording).
+// One honest caveat: NWS's /forecast endpoint doesn't expose raw barometric
+// pressure or numeric cloud-cover % — this infers "unsettled" from the same
+// wind-shift + precipitation pattern a falling-pressure front produces, rather
+// than reading a barometer directly. Good enough for the well-known rule (fish
+// feed harder ahead of a front, go quiet behind one) without adding a second
+// live data source.
+function computeTodayFactors(periods) {
   const p0 = periods[0], p1 = periods[1], p2 = periods[2];
   const d0 = dirToDeg(p0.windDirection);
   const d2 = p2 ? dirToDeg(p2.windDirection) : null;
@@ -411,7 +461,14 @@ function computeWeatherAngle(periods) {
   const precipSoon = periods.slice(0, 3).some(p => /rain|shower|thunderstorm|snow|drizzle/i.test(p.shortForecast));
   const windJump = p1 ? maxWindMph(p1.windSpeed) - maxWindMph(p0.windSpeed) : 0;
   const frontLikely = (shift >= 67 && precipSoon) || windJump >= 8;
+  const windMph = maxWindMph(p0.windSpeed);
+  const lowLight = /cloud|overcast|rain|shower|storm|fog|drizzle/i.test(p0.shortForecast) && !/sunny|clear/i.test(p0.shortForecast);
+  const brightCalm = /sunny|clear/i.test(p0.shortForecast) && windMph < 8;
+  return { p0, p1, p2, windMph, frontLikely, precipSoon, lowLight, brightCalm };
+}
 
+function computeWeatherAngle(f) {
+  const { p0, p1, p2, frontLikely, precipSoon } = f;
   if (frontLikely) {
     const towardDir = (p2 || p1).windDirection;
     return `Looks like a front is moving through over the next day or so — wind swinging from ${p0.windDirection} ` +
@@ -426,6 +483,77 @@ function computeWeatherAngle(periods) {
     ` With stable weather, normal timing (early/late, low light) matters more than chasing a front right now.`;
 }
 
+// Scores how well each spot's structure type fits *today's* conditions, using
+// the same well-established ideas as the weather angle above: sheltered bays
+// beat rough open water when it's windy; points/current seams/humps come alive
+// with a wind-blown chop; overcast keeps fish shallow and active (good for
+// bays and muskie); bright and calm pushes fish deep and tight (good for
+// humps). This is deliberately simple, transparent rule-based scoring — not a
+// black box — so "why is this spot ranked here today" always has a one-line
+// answer.
+function scoreSpot(spot, f) {
+  let score = 50;
+  let reason = null;
+  const isBay = spot.kind === 'bay';
+  const isPoint = spot.kind === 'point';
+  const isCurrent = spot.kind === 'current';
+  const isHump = spot.kind === 'hump';
+  const setReason = (r) => { if (!reason) reason = r; };
+
+  if (f.frontLikely && (isPoint || isCurrent || isHump)) {
+    score += 20;
+    setReason("pre-frontal window — active fish should be using this structure hard right now");
+  }
+
+  if (f.windMph >= 8 && f.windMph <= 20) {
+    if (isPoint || isCurrent) { score += 18; setReason('wind-blown today — bait is loading up against this structure'); }
+    else if (isHump) { score += 8; setReason('light-to-moderate chop over the top, better than dead calm here'); }
+  } else if (f.windMph > 20) {
+    if (isBay) { score += 15; setReason('sheltered water while the main lake is rough today'); }
+    else if (isPoint || isHump) { score -= 10; setReason('exposed to today\'s wind — tough boat control, lower priority today'); }
+  } else if (f.windMph < 5) {
+    if (isHump) { score -= 8; setReason('dead calm today, which tends to shut down open-water structure'); }
+    else if (isBay) { score += 5; }
+  }
+
+  if (f.lowLight) {
+    if (isBay) { score += 12; setReason("today's overcast keeps fish shallow and active here"); }
+    else if (isHump) { score += 6; }
+    if (spot.species.includes('muskie')) { score += 5; }
+  } else if (f.brightCalm) {
+    if (isHump) { score += 12; setReason("bright, calm skies today push fish to deeper structure like this"); }
+    else if (isBay) { score -= 6; }
+    if (spot.species.includes('muskie')) { score += 4; setReason('good bright-light window for muskie sight-feeding'); }
+  }
+
+  return { score, reason: reason || 'solid all-around structure regardless of today\'s specific conditions' };
+}
+
+function renderTodaysPicks(factors) {
+  const scored = SPOTS.map(spot => ({ spot, ...scoreSpot(spot, factors) }));
+  scored.sort((a, b) => b.score - a.score);
+  const top = scored.slice(0, 5);
+  const html = `
+    <p class="spot-label" style="margin-top:14px;">Today's top picks</p>
+    <p class="muted" style="font-size:11.5px;">Ranked live from today's wind and light — same rule-based logic as the weather angle above, no AI, recomputed every time you open the app.</p>
+    <div class="picks-list">
+      ${top.map(({ spot, reason }) => `
+        <button class="pick-item" data-spot-id="${spot.id}">
+          <span class="pick-dot" style="background:${primaryColor(spot)}"></span>
+          <span class="pick-text"><b>${spot.name}</b><br><span class="muted">${reason}</span></span>
+        </button>
+      `).join('')}
+    </div>
+  `;
+  document.getElementById('weather-block').insertAdjacentHTML('beforeend', html);
+  document.querySelectorAll('.pick-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const spot = SPOTS.find(s => s.id === btn.dataset.spotId);
+      if (spot) openSpotPanel(spot);
+    });
+  });
+}
+
 // --- Live weather from National Weather Service (api.weather.gov), no key required ---
 async function loadWeather() {
   const { gridId, gridX, gridY } = LAKE.weatherPoint;
@@ -436,6 +564,8 @@ async function loadWeather() {
     const json = await res.json();
     const periods = json.properties.periods.slice(0, 6);
     const now = periods[0];
+    const factors = computeTodayFactors(periods);
+    window.__todayFactors = factors;
     block.innerHTML = `
       <div class="wx-now">
         <span class="temp">${now.temperature}°${now.temperatureUnit}</span>
@@ -453,8 +583,9 @@ async function loadWeather() {
       </div>
       <p class="muted" style="margin-top:8px;font-size:11.5px;">Live forecast: National Weather Service (api.weather.gov), Duluth office.</p>
       <p class="spot-label">Weather angle</p>
-      <p>${computeWeatherAngle(periods)}</p>
+      <p>${computeWeatherAngle(factors)}</p>
     `;
+    renderTodaysPicks(factors);
   } catch (err) {
     block.innerHTML = `<p class="muted">Couldn't load live weather (offline or NWS unreachable). Check conditions manually before heading out.</p>`;
   }
