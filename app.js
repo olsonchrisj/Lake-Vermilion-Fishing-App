@@ -326,7 +326,7 @@ map.on('click', closeAllSheets);
 // it's intentionally NOT tied to the daily report scraper (see the "Automation
 // last checked" line in the report panel for that; they're different things and
 // conflating them was confusing).
-document.getElementById('updated-label').textContent = `Spots updated ${LAST_UPDATED}`;
+document.getElementById('updated-label').textContent = `Updated ${LAST_UPDATED}`;
 
 // Only show reports from the last REPORT_MAX_AGE_DAYS days — an old report showing
 // up as if it were current is worse than not showing one at all. If every report on
