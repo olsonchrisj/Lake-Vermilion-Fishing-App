@@ -2,8 +2,10 @@ name: Refresh fishing reports
 
 on:
   schedule:
+    # 12:00 UTC = 6am/7am Central (depending on daylight saving) — early enough
+    # to have something fresh before a morning trip.
     - cron: '0 12 * * *'
-  workflow_dispatch: {}
+  workflow_dispatch: {} # lets you trigger it manually from the Actions tab too
 
 permissions:
   contents: write
@@ -13,19 +15,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+
       - name: Scrape latest reports
         run: node scripts/refresh-reports.mjs
-      - name: Commit and push if changed
+
+      - name: Commit and push
         run: |
           git config user.name "lv-app-bot"
           git config user.email "actions@users.noreply.github.com"
+          git add reports.checked.js
           if git diff --quiet -- reports.auto.js; then
-            echo "No change in reports.auto.js — nothing to commit."
+            git commit -m "Daily report check (no new content)"
           else
             git add reports.auto.js
             git commit -m "Auto-refresh fishing reports"
-            git push
           fi
+          git push
