@@ -81,11 +81,12 @@ html, body {
   position: absolute;
   bottom: calc(env(safe-area-inset-bottom, 0) + 14px);
   left: 10px;
-  right: 10px;
+  right: 56px; /* clears Leaflet's bottom-right zoom control */
   z-index: 500;
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
-  overflow-x: auto;
+  justify-content: center;
   pointer-events: none;
 }
 #species-filter .chip {
@@ -150,6 +151,26 @@ html, body {
 }
 .wx-period .name { font-weight: 700; color: var(--purple); margin-bottom: 3px; }
 .wx-period .t { font-size: 16px; font-weight: 700; }
+
+.picks-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.pick-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.pick-item:active { background: rgba(255,255,255,0.09); }
+.pick-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; flex: 0 0 auto; }
+.pick-text { font-size: 12.5px; line-height: 1.4; }
+.pick-text b { color: #fff; }
 
 #report-block { padding: 12px 0; border-bottom: 1px solid var(--border); }
 .report-card { margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px dashed var(--border); }
