@@ -1,8 +1,8 @@
 // Lake Vermilion Fishing App
 
 const map = L.map('map', { zoomControl: false, attributionControl: true });
+map.attributionControl.setPrefix(false); // drop the clickable "Leaflet" link, keep required OSM credit
 L.control.zoom({ position: 'bottomright' }).addTo(map);
-map.attributionControl.setPrefix(false); // drop the clickable Leaflet link, keep required OSM credit
 
 function fitLake() {
   map.invalidateSize();
@@ -300,9 +300,13 @@ function openSpotPanel(spot) {
     return `<span class="species-tag" style="background:${info.color};color:${idealTextColor(info.color)}">${info.label}</span>`;
   }).join('');
   let todayFitHtml = '';
-  if (window.__todayFactors) {
-    const { reason } = scoreSpot(spot, window.__todayFactors);
-    todayFitHtml = `<p class="spot-label">Today's fit</p><p>${reason.charAt(0).toUpperCase()}${reason.slice(1)}.</p>`;
+  const activeFactors = window.__todayFactorsByBucket && window.__selectedBucketKey
+    ? window.__todayFactorsByBucket[window.__selectedBucketKey]
+    : window.__todayFactors;
+  if (activeFactors) {
+    const { reason } = scoreSpot(spot, activeFactors);
+    const label = window.__selectedBucketKey ? `Fit — ${BUCKET_LABELS[window.__selectedBucketKey]}` : "Today's fit";
+    todayFitHtml = `<p class="spot-label">${label}</p><p>${reason.charAt(0).toUpperCase()}${reason.slice(1)}.</p>`;
   }
   document.getElementById('spot-detail').innerHTML = `
     <p class="spot-title">${spot.name}</p>
@@ -323,10 +327,8 @@ function openSpotPanel(spot) {
 map.on('click', closeAllSheets);
 
 // --- Report panel content (static from data.js) ---
-// This reflects when the spot recommendations/analysis were last revised by hand —
-// it's intentionally NOT tied to the daily report scraper (see the "Automation
-// last checked" line in the report panel for that; they're different things and
-// conflating them was confusing).
+// General "last shipped a change" date — separate from the "Automation last
+// checked" line in the report panel below, which tracks the daily scraper.
 document.getElementById('updated-label').textContent = `Updated ${LAST_UPDATED}`;
 
 // Only show reports from the last REPORT_MAX_AGE_DAYS days — an old report showing
@@ -484,6 +486,94 @@ function computeWeatherAngle(f) {
     ` With stable weather, normal timing (early/late, low light) matters more than chasing a front right now.`;
 }
 
+// --- Time-of-day buckets: same rule-based scoring as above, but computed from the
+// NWS *hourly* forecast (not the twice-daily Today/Tonight periods) so Morning/
+// Midday/Evening/Night each get their own live wind, light, and front-timing read
+// instead of all sharing one daily average. Every bucket always uses the next
+// upcoming occurrence of that window — the one in progress right now if you're
+// currently in it — so it stays a live look rather than replaying an old forecast.
+const BUCKET_LABELS = { morning: 'Morning', midday: 'Midday', evening: 'Evening', night: 'Night' };
+const LOW_LIGHT_RE = /cloud|overcast|rain|shower|storm|fog|drizzle/i;
+const BRIGHT_RE = /sunny|clear/i;
+
+function classifyHour(hour) {
+  if (hour >= 5 && hour < 11) return 'morning';
+  if (hour >= 11 && hour < 16) return 'midday';
+  if (hour >= 16 && hour < 20) return 'evening';
+  return 'night';
+}
+function currentBucketKey() {
+  return classifyHour(new Date().getHours());
+}
+// A Night bucket spans 8pm-5am, crossing midnight — key its pre- and post-midnight
+// hours to the same group by rolling hours before 5am back to the previous date.
+function bucketGroupDate(date) {
+  const d = new Date(date);
+  if (d.getHours() < 5) d.setDate(d.getDate() - 1);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+// Scans hour-by-hour wind direction for a sustained >=67° shift (held for 2+ hours
+// after it starts, to ignore noise) and returns when it begins — a more precise
+// version of the shift check computeTodayFactors does with only Today/Tonight/Tomorrow.
+function detectFrontShift(hourly) {
+  if (!hourly.length) return null;
+  const baseDeg = dirToDeg(hourly[0].windDirection);
+  if (baseDeg === null) return null;
+  for (let i = 1; i < hourly.length - 2; i++) {
+    const deg = dirToDeg(hourly[i].windDirection);
+    const deg2 = dirToDeg(hourly[i + 1] && hourly[i + 1].windDirection);
+    const deg3 = dirToDeg(hourly[i + 2] && hourly[i + 2].windDirection);
+    if (deg === null || deg2 === null || deg3 === null) continue;
+    if (angleDiff(deg, baseDeg) >= 67 && angleDiff(deg2, baseDeg) >= 50 && angleDiff(deg3, baseDeg) >= 50) {
+      return new Date(hourly[i].startTime);
+    }
+  }
+  return null;
+}
+function buildHourlyBuckets(hourly) {
+  const now = new Date();
+  const next48 = hourly.filter(h => new Date(h.endTime || h.startTime) > now).slice(0, 48);
+  if (!next48.length) return null;
+
+  const groups = {}; // "dateMs|bucket" -> hour entries
+  next48.forEach(h => {
+    const start = new Date(h.startTime);
+    const bucket = classifyHour(start.getHours());
+    const key = `${bucketGroupDate(start)}|${bucket}`;
+    (groups[key] = groups[key] || []).push(h);
+  });
+
+  const shiftDate = detectFrontShift(next48);
+  const next24 = next48.slice(0, 24);
+  const precipSoon = next24.some(h => /rain|shower|thunderstorm|snow|drizzle/i.test(h.shortForecast));
+  const windJump = Math.max(...next24.map(h => maxWindMph(h.windSpeed))) - maxWindMph(next48[0].windSpeed);
+  const frontLikelyGlobal = (shiftDate && precipSoon) || windJump >= 8;
+
+  const result = {};
+  Object.keys(BUCKET_LABELS).forEach(bucket => {
+    const key = Object.keys(groups).filter(k => k.endsWith(`|${bucket}`)).sort()[0];
+    if (!key) { result[bucket] = null; return; }
+    const hours = groups[key];
+    const windMph = Math.round(hours.reduce((sum, h) => sum + maxWindMph(h.windSpeed), 0) / hours.length);
+    const anyLowLightText = hours.some(h => LOW_LIGHT_RE.test(h.shortForecast));
+    const anyBrightText = hours.some(h => BRIGHT_RE.test(h.shortForecast));
+    const lowLight = bucket !== 'midday' || anyLowLightText;
+    const brightCalm = bucket === 'midday' && anyBrightText && !anyLowLightText && windMph < 8;
+    const bucketStart = new Date(hours[0].startTime);
+    const bucketEnd = new Date(hours[hours.length - 1].endTime || hours[hours.length - 1].startTime);
+    const dayLabel = bucketGroupDate(bucketStart) === bucketGroupDate(now) ? 'Today' : 'Tomorrow';
+    const timeFmt = (d) => d.toLocaleTimeString('en-US', { hour: 'numeric' });
+    result[bucket] = {
+      windMph, precipSoon, lowLight, brightCalm,
+      frontLikely: frontLikelyGlobal && (!shiftDate || bucketStart < shiftDate),
+      rangeLabel: `${dayLabel}, ${timeFmt(bucketStart)}–${timeFmt(bucketEnd)}`
+    };
+  });
+  if (!result.morning || !result.midday || !result.evening || !result.night) return null;
+  return result;
+}
+
 // Scores how well each spot's structure type fits *today's* conditions, using
 // the same well-established ideas as the weather angle above: sheltered bays
 // beat rough open water when it's windy; points/current seams/humps come alive
@@ -530,13 +620,35 @@ function scoreSpot(spot, f) {
   return { score, reason: reason || 'solid all-around structure regardless of today\'s specific conditions' };
 }
 
-function renderTodaysPicks(factors) {
+// Renders the ranked picks list. Pass a buckets object (from buildHourlyBuckets) plus
+// a selected bucket key to get the time-of-day toggle; pass a single daily factors
+// object (from computeTodayFactors) to fall back to one plain "today" ranking when
+// the hourly forecast couldn't be loaded.
+function renderTodaysPicks(input, selectedKey) {
+  const isBuckets = !!(input && input.morning && input.midday && input.evening && input.night);
+  const buckets = isBuckets ? input : null;
+  const activeKey = isBuckets ? (selectedKey || currentBucketKey()) : null;
+  const factors = isBuckets ? buckets[activeKey] : input;
+
   const scored = SPOTS.map(spot => ({ spot, ...scoreSpot(spot, factors) }));
   scored.sort((a, b) => b.score - a.score);
   const top = scored.slice(0, 5);
+
+  const toggleHtml = isBuckets ? `
+    <div class="time-toggle">
+      ${Object.keys(BUCKET_LABELS).map(k => `
+        <button class="time-pill${k === activeKey ? ' active' : ''}" data-bucket="${k}">${BUCKET_LABELS[k]}</button>
+      `).join('')}
+    </div>
+    <p class="muted" style="font-size:11px;margin-top:6px;">${buckets[activeKey].rangeLabel}</p>
+  ` : '';
+
   const html = `
-    <p class="spot-label" style="margin-top:14px;">Today's top picks</p>
-    <p class="muted" style="font-size:11.5px;">Ranked live from today's wind and light — same rule-based logic as the weather angle above, no AI, recomputed every time you open the app.</p>
+    <p class="spot-label" style="margin-top:14px;">${isBuckets ? 'Top picks by time of day' : "Today's top picks"}</p>
+    <p class="muted" style="font-size:11.5px;">${isBuckets
+      ? 'Ranked live from the hourly NWS forecast for each window — pick a time of day to see the recommendation shift.'
+      : "Ranked live from today's wind and light — same rule-based logic as the weather angle above, no AI, recomputed every time you open the app."}</p>
+    ${toggleHtml}
     <div class="picks-list">
       ${top.map(({ spot, reason }) => `
         <button class="pick-item" data-spot-id="${spot.id}">
@@ -546,8 +658,27 @@ function renderTodaysPicks(factors) {
       `).join('')}
     </div>
   `;
-  document.getElementById('weather-block').insertAdjacentHTML('beforeend', html);
-  document.querySelectorAll('.pick-item').forEach(btn => {
+
+  // Replace any previously rendered picks block instead of stacking a new one below
+  // it — needed both for re-loads and for switching time-of-day pills in place.
+  const existing = document.getElementById('todays-picks-block');
+  if (existing) existing.remove();
+  const wrapper = document.createElement('div');
+  wrapper.id = 'todays-picks-block';
+  wrapper.innerHTML = html;
+  document.getElementById('weather-block').appendChild(wrapper);
+
+  if (isBuckets) {
+    window.__todayFactorsByBucket = buckets;
+    window.__selectedBucketKey = activeKey;
+    wrapper.querySelectorAll('.time-pill').forEach(btn => {
+      btn.addEventListener('click', () => renderTodaysPicks(buckets, btn.dataset.bucket));
+    });
+  } else {
+    window.__todayFactors = factors;
+  }
+
+  wrapper.querySelectorAll('.pick-item').forEach(btn => {
     btn.addEventListener('click', () => {
       const spot = SPOTS.find(s => s.id === btn.dataset.spotId);
       if (spot) openSpotPanel(spot);
@@ -566,7 +697,6 @@ async function loadWeather() {
     const periods = json.properties.periods.slice(0, 6);
     const now = periods[0];
     const factors = computeTodayFactors(periods);
-    window.__todayFactors = factors;
     block.innerHTML = `
       <div class="wx-now">
         <span class="temp">${now.temperature}°${now.temperatureUnit}</span>
@@ -586,7 +716,22 @@ async function loadWeather() {
       <p class="spot-label">Weather angle</p>
       <p>${computeWeatherAngle(factors)}</p>
     `;
-    renderTodaysPicks(factors);
+
+    // Hourly forecast powers the Morning/Midday/Evening/Night picks below — a
+    // separate, more granular NWS endpoint than the twice-daily one above. If it
+    // fails for any reason, fall back to one plain "today" ranking instead of
+    // showing a broken or empty picks section.
+    let buckets = null;
+    try {
+      const hourlyRes = await fetch(`https://api.weather.gov/gridpoints/${gridId}/${gridX},${gridY}/forecast/hourly`);
+      if (hourlyRes.ok) {
+        const hourlyJson = await hourlyRes.json();
+        buckets = buildHourlyBuckets(hourlyJson.properties.periods);
+      }
+    } catch (hourlyErr) {
+      console.error('Hourly forecast failed', hourlyErr);
+    }
+    renderTodaysPicks(buckets || factors, buckets ? currentBucketKey() : undefined);
   } catch (err) {
     block.innerHTML = `<p class="muted">Couldn't load live weather (offline or NWS unreachable). Check conditions manually before heading out.</p>`;
   }

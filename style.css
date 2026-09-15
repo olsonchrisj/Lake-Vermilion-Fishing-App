@@ -152,6 +152,19 @@ html, body {
 .wx-period .name { font-weight: 700; color: var(--purple); margin-bottom: 3px; }
 .wx-period .t { font-size: 16px; font-weight: 700; }
 
+.time-toggle { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.time-pill {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 14px;
+  cursor: pointer;
+}
+.time-pill.active { background: var(--purple); border-color: var(--purple); color: #fff; }
+
 .picks-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
 .pick-item {
   display: flex;
@@ -224,7 +237,14 @@ html, body {
   color: #fff;
   font-size: 11px;
   font-weight: 800;
-  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, -1px 0 0 #000, 1px 0 0 #000, 0 -1px 0 #000, 0 1px 0 #000, 0 0 4px rgba(0, 0, 0, 0.85);
+  /* A blur-only glow washes out against the light-blue water color in Streets
+     view — this pairs a solid 1px outline in every direction (so it reads as
+     a real stroke, not a fade) with a soft glow behind it for extra depth
+     against satellite imagery too. */
+  text-shadow:
+    -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000,
+    -1px 0 0 #000, 1px 0 0 #000, 0 -1px 0 #000, 0 1px 0 #000,
+    0 0 4px rgba(0, 0, 0, 0.85);
   text-align: center;
   pointer-events: none;
   white-space: nowrap;
