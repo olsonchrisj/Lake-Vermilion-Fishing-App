@@ -13,7 +13,7 @@ const LAKE = {
   weatherPoint: { lat: 47.8791, lon: -92.4634, gridId: "DLH", gridX: 78, gridY: 121 }
 };
 
-const LAST_UPDATED = "2026-09-14";
+const LAST_UPDATED = "2026-09-15";
 
 // Reports used to be hand-typed here. They're now pulled automatically — see
 // reports.auto.js, regenerated daily by a GitHub Actions workflow
