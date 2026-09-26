@@ -1,9 +1,10 @@
 name: Weekly Claude analysis
 
 on:
-  schedule:
-    # Sundays 11:00 UTC (5-6am Central), ahead of the week's fishing.
-    - cron: '0 11 * * 0'
+  # No schedule: this needs an ANTHROPIC_API_KEY repository secret (API billing).
+  # To run weekly once a key is set, add a schedule trigger here, e.g.
+  #   schedule:
+  #     - cron: '0 11 * * 0'
   workflow_dispatch:
     inputs:
       dry_run:
