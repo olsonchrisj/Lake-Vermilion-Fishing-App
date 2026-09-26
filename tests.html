@@ -73,6 +73,7 @@ document.getElementById('app').addEventListener('load', () => {
   t('sonar: none => no change', () => eq(w.interpretSonar(null, 52, 'turnover').phaseKey, 'turnover'));
   t('sonar: heavy clutter note differs in turnover', () => w.interpretSonar({ clutter: 'heavy' }, 52, 'turnover').notes[0] !== w.interpretSonar({ clutter: 'heavy' }, 66, 'early-fall').notes[0] || 'same');
   t('spot below marked thermocline scores lower', () => { const c = { phase: null, signals: null, pressure: null, thermoDepth: 20 }; return w.scoreSpot({ kind: 'bay', species: ['walleye'], depth: [28, 34] }, { ...base, ctx: c }).score < w.scoreSpot({ kind: 'bay', species: ['walleye'], depth: [12, 18] }, { ...base, ctx: c }).score || 'no penalty'; });
+  t('weekly-analysis pick boosts a spot', () => { const c = { phase: null, signals: null, pressure: null, weekly: { topWhy: { x1: 'why' }, notes: {} } }; return w.scoreSpot({ id: 'x1', kind: 'bay', species: ['walleye'] }, { ...base, ctx: c }).score > w.scoreSpot({ id: 'x2', kind: 'bay', species: ['walleye'] }, { ...base, ctx: c }).score || 'no boost'; });
   const bad = results.filter(r => !r[1]).length;
   document.getElementById('out').innerHTML = `<p class="${bad ? 'bad' : 'ok'}">${results.length - bad}/${results.length} passed</p>` +
     results.map(([n, ok, d]) => `<div class="${ok ? 'ok' : 'bad'}">${ok ? '✓' : '✗'} ${n}${ok ? '' : ' — ' + d}</div>`).join('');
