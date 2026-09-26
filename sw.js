@@ -1,35 +1,78 @@
-const CACHE = 'lv-fishing-v2';
-const ASSETS = ['./', 'index.html', 'style.css', 'app.js', 'data.js', 'bathymetry.js', 'manifest.json'];
+const CACHE = 'lv-fishing-v3';
+const TILE_CACHE = 'lv-fishing-tiles-v1';
+const MAX_TILES = 500;
+const LEAFLET = [
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+];
+const ASSETS = [
+  './', 'index.html', 'style.css', 'app.js', 'data.js', 'bathymetry.js',
+  'reports.auto.js', 'reports.checked.js', 'manifest.json', 'icons/icon.svg'
+];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)));
+  event.waitUntil(caches.open(CACHE).then(async (cache) => {
+    await cache.addAll(ASSETS);
+    // Leaflet comes from a CDN (cross-origin); cache it too so the map still loads
+    // offline. Failure here shouldn't block install.
+    await Promise.all(LEAFLET.map(u =>
+      fetch(u, { mode: 'no-cors' }).then(r => cache.put(u, r)).catch(() => {})
+    ));
+  }));
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE && k !== TILE_CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
 
+async function trimTiles() {
+  const cache = await caches.open(TILE_CACHE);
+  const keys = await cache.keys();
+  for (let i = 0; i < keys.length - MAX_TILES; i++) await cache.delete(keys[i]);
+}
+
+function isTile(url) {
+  return url.includes('arcgisonline') || url.includes('tile.openstreetmap.org');
+}
+
 self.addEventListener('fetch', (event) => {
-  const url = event.request.url;
-  // Always go to network for live data (weather, live map tiles); never cache these.
-  if (url.includes('api.weather.gov') || url.includes('arcgisonline') || url.includes('tile.openstreetmap.org')) {
+  const req = event.request;
+  if (req.method !== 'GET') return;
+  const url = req.url;
+  // Live weather is never cached — stale conditions are worse than none.
+  if (url.includes('api.weather.gov')) return;
+
+  // Map tiles: network first, remember the ones you've seen so the areas you've
+  // browsed still draw when you lose cell signal at the lake.
+  if (isTile(url)) {
+    event.respondWith(
+      fetch(req)
+        .then(res => {
+          const copy = res.clone();
+          caches.open(TILE_CACHE).then(c => c.put(req, copy)).then(trimTiles);
+          return res;
+        })
+        .catch(() => caches.match(req))
+    );
     return;
   }
-  // Network-first for the app shell so updates (new spots, new report, fixes) show up
-  // as soon as you're online, instead of getting stuck on whatever was cached first.
-  // Falls back to the cached copy only when offline.
+
+  // App shell: network first so updates show up as soon as you're online, falling
+  // back to the cached copy when offline. Only successful responses get cached.
   event.respondWith(
-    fetch(event.request)
+    fetch(req)
       .then(res => {
-        const copy = res.clone();
-        caches.open(CACHE).then(cache => cache.put(event.request, copy));
+        if (res && (res.ok || res.type === 'opaque')) {
+          const copy = res.clone();
+          caches.open(CACHE).then(cache => cache.put(req, copy));
+        }
         return res;
       })
-      .catch(() => caches.match(event.request))
+      .catch(() => caches.match(req, { ignoreSearch: true }))
   );
 });
