@@ -155,3 +155,23 @@ electronics to confirm the exact crown.
   open-water season. The old single-source setup pulled from a syndicated
   repost of Zach Hrvol's report on lakevermilionresorts.com; that's now
   replaced with his own site directly.
+
+## Recent improvements
+
+- Scraped report text is entity-decoded and HTML-escaped before display.
+- The daily scraper now keeps a rolling history (6 per source, 120 days) instead
+  of only the latest post.
+- Picks are species-aware (walleye/muskie favor dusk and night, smallmouth and
+  perch favor midday, etc.) on top of the wind/light/front logic.
+- My Location adds distance and bearing to each pick and spot.
+- "Same week, past years" only shows when the calendar date is within ~10 days
+  (`weekOf` in `HISTORICAL_REPORTS`). Spot notes older than 30 days get a
+  staleness warning.
+- Cache-busting `?v=` strings in `index.html` are now updated automatically by
+  `.github/workflows/cache-bust.yml` (content hash) — no manual bumping.
+- Offline: service worker precaches all app files plus Leaflet, and remembers
+  map tiles you've viewed.
+- `bathymetry.js` loads after first paint, contours draw on canvas, and depth
+  labels are built lazily on first zoom-in.
+- **Mark Spot** saves personal waypoints on your device (localStorage only).
+- Open `tests.html` in a browser (via a local server) to run the scoring/weather logic tests.
