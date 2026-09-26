@@ -58,42 +58,66 @@ const PHASES = {
   'ice-out': {
     label: 'Ice-out / cold water', blurb: 'Cold water; fish are sluggish and hold near the warmest, shallowest water they can find.',
     depth: { walleye: [4, 12], perch: [3, 10], muskie: [3, 10], smallmouth: [8, 16], crappie: [3, 8] },
-    kindBonus: { bay: 8, current: 4 }
+    kindBonus: { bay: 8, current: 4 },
+    look: ["Water is in the 30s and low 40s; ice-out or right after.", "Fish sluggish, bites are light taps."],
+    adjust: ["Fish the warmest shallow water: dark-bottom bays and afternoon sun.", "Slow down: small jigs and minnows, long pauses."],
+    next: "Spring spawn begins around 40–50°F."
   },
   'spring-spawn': {
     label: 'Spring spawn', blurb: 'Walleye and perch stage on rock, gravel and current; fish are shallow and predictable.',
     depth: { walleye: [3, 12], perch: [2, 8], muskie: [3, 10], smallmouth: [6, 14], crappie: [2, 8] },
-    kindBonus: { current: 10, bay: 6 }
+    kindBonus: { current: 10, bay: 6 },
+    look: ["Water 40–50°F; walleye and perch on rock, gravel and current.", "Fish concentrated and predictable."],
+    adjust: ["Work the river outlet and shallow rock at night and low light.", "Jig and minnow; keep fish handling gentle (protect spawners)."],
+    next: "Post-spawn once water passes ~50°F."
   },
   'post-spawn': {
     label: 'Post-spawn', blurb: 'Fish recover and start spreading to the first breaks and weed edges.',
     depth: { walleye: [8, 18], perch: [6, 14], muskie: [4, 12], smallmouth: [6, 16], crappie: [5, 12] },
-    kindBonus: { bay: 5, point: 4 }
+    kindBonus: { bay: 5, point: 4 },
+    look: ["Water 50–60°F; fish leaving spawning areas.", "Bites can be picky for a week or two."],
+    adjust: ["Move out to the first break and weed edges.", "Slip bobbers and jigs with live bait, then start trolling."],
+    next: "Early summer at ~60°F."
   },
   'early-summer': {
     label: 'Early summer', blurb: 'Weeds are up and baitfish are shallow; fish spread across weed edges, points and reefs.',
     depth: { walleye: [10, 20], perch: [8, 16], muskie: [4, 14], smallmouth: [8, 18], crappie: [6, 14] },
-    kindBonus: { point: 5, hump: 4 }
+    kindBonus: { point: 5, hump: 4 },
+    look: ["Water 60–68°F; weeds up, baitfish shallow.", "Fish spread out along weed edges, points and reefs."],
+    adjust: ["Match the hatch on shallow structure at low light.", "Try crankbaits and spinners as well as live bait."],
+    next: "Summer patterns above ~68°F."
   },
   'summer': {
     label: 'Summer', blurb: 'Warm surface water. Fish hold on deeper structure and mud basins by day and push shallow at low light.',
     depth: { walleye: [15, 32], perch: [10, 20], muskie: [6, 16], smallmouth: [10, 22], crappie: [8, 18] },
-    kindBonus: { hump: 6, point: 3 }
+    kindBonus: { hump: 6, point: 3 },
+    look: ["Water 68°F+; fish stratified, deeper by day.", "Best action at dawn, dusk and night."],
+    adjust: ["Fish deeper structure and mud basins mid-day, shallow at low light.", "Lead-core and crawler rigs on basins."],
+    next: "Early fall when the lake cools below ~68°F."
   },
   'early-fall': {
     label: 'Early fall (cooling, pre-turnover)', blurb: 'Water is cooling but still stratified. Walleye sit on transitions, rock and mud flats; fish begin to move shallower at low light.',
     depth: { walleye: [12, 28], perch: [10, 20], muskie: [6, 18], smallmouth: [8, 20], crappie: [8, 16] },
-    kindBonus: { current: 5, point: 4, hump: 3 }
+    kindBonus: { current: 5, point: 4, hump: 3 },
+    look: ["Surface 55–68°F and slowly dropping.", "Weeds dying back; fall colors starting.", "Sonar still shows fish on transitions, rock and mud flats."],
+    adjust: ["Stay with the current pattern: transitions and flats, 12–28 ft.", "Watch the temperature — falling below ~55°F means turnover is near.", "Get your last good stable-weather days now."],
+    next: "Turnover begins around 47–55°F."
   },
   'turnover': {
     label: 'Fall turnover', blurb: 'Surface water is mixing with deep water. Bites can be erratic; fish often relate to wind-blown points and shallower rock, and muskie feed heavily.',
     depth: { walleye: [8, 20], perch: [10, 20], muskie: [6, 20], smallmouth: [15, 30], crappie: [8, 16] },
-    kindBonus: { point: 8, current: 5, bay: -2 }
+    kindBonus: { point: 8, current: 5, bay: -2 },
+    look: ["Surface roughly 47–55°F and about the same temperature top to bottom (temp at depth ≈ surface).", "Cloudy or greenish water, foam or debris on windy shores, a fishy or algae smell.", "Fish scattered: sudden dead spots on flats that were producing, suspended fish, few marks.", "Bites erratic, with short windows."],
+    adjust: ["Cover water: troll or drift to find active fish instead of sitting on one spot.", "Move shallower and to wind-blown points and rock, 8–20 ft, especially at low light.", "Downsize and slow down: smaller jigs, minnows, less flash.", "Muskie: feed heavily now, so throw big baits on points and weed edges.", "Be patient. Bites usually settle in one to two weeks as the water clears."],
+    next: "Late fall patterns below ~47°F."
   },
   'late-fall': {
     label: 'Late fall (cold water)', blurb: 'Cold, clear water. Fish slow down and hold on deeper breaks; the best bites are short and at low light. Downsize and slow down.',
     depth: { walleye: [10, 30], perch: [15, 30], muskie: [8, 25], smallmouth: [25, 40], crappie: [10, 20] },
-    kindBonus: { hump: 5, point: 4, bay: -4 }
+    kindBonus: { hump: 5, point: 4, bay: -4 },
+    look: ["Surface under ~47°F and falling; water clear again.", "Fish stacked on deep breaks and basin edges.", "Bites are short and at low light."],
+    adjust: ["Fish deeper breaks, 10–30 ft: vertical jigging, minnows and spoons.", "Downsize; slow everything down.", "Night walleye on shallow rock; fish the warmest part of the afternoon."],
+    next: "Winter approaches near 35°F."
   }
 };
 
@@ -102,7 +126,7 @@ function seasonPhase(date, waterTempF) {
   const t = waterTempF;
   let key;
   if (cooling) {
-    key = t >= 68 ? 'summer' : t >= 58 ? 'early-fall' : t >= 50 ? 'turnover' : 'late-fall';
+    key = t >= 68 ? 'summer' : t >= 55 ? 'early-fall' : t >= 47 ? 'turnover' : 'late-fall';
   } else {
     key = t < 40 ? 'ice-out' : t < 50 ? 'spring-spawn' : t < 60 ? 'post-spawn' : t < 68 ? 'early-summer' : 'summer';
   }
