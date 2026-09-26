@@ -182,3 +182,11 @@ electronics to confirm the exact crown.
   falling back to Ely/Eveleth) drives front detection; the depths and techniques
   guides mention in their reports are extracted and matched against each spot's
   `depth` range. Picks now explain themselves with the strongest of these factors.
+- **Weekly Claude analysis** (AI-written, clearly labeled in the app): every Sunday
+  `.github/workflows/weekly-analysis.yml` runs `scripts/weekly-analysis.mjs`, which sends the
+  season model, guide reports, NWS forecast and barometer trend to Claude and commits the result
+  to `analysis.weekly.js`: a written outlook, a note for every spot, and a handful of flagged
+  picks that get a small score boost. It needs a repository secret named `ANTHROPIC_API_KEY`
+  (repo Settings → Secrets and variables → Actions). Run it by hand from the Actions tab; tick
+  "dry run" to check the data assembly without calling the API. The output is validated and
+  HTML-escaped, and ignored by the app if it's more than 10 days old.
