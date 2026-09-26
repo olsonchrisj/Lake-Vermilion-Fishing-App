@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>LV app tests</title>
+<style>body{font:14px system-ui;padding:16px}.ok{color:#187a3a}.bad{color:#b00020;font-weight:600}</style></head>
+<body><h2>Scoring / weather logic tests</h2><div id="out">Running…</div>
+<iframe id="app" src="index.html" style="width:400px;height:600px;position:absolute;left:-9999px"></iframe>
+<script>
+// Loads the real app in a hidden iframe and exercises its pure functions.
+document.getElementById('app').addEventListener('load', () => {
+  const w = document.getElementById('app').contentWindow;
+  const results = [];
+  const t = (name, fn) => { try { const r = fn(); results.push([name, r === true || r === undefined, r]); } catch (e) { results.push([name, false, e.message]); } };
+  const eq = (a, b) => a === b || `expected ${b}, got ${a}`;
+  const spot = (kind, species = ['walleye']) => ({ kind, species });
+  const base = { windMph: 10, frontLikely: false, precipSoon: false, lowLight: false, brightCalm: false };
+
+  t('front: wind swing + rain', () => eq(w.isFrontLikely({ shiftDeg: 90, precipSoon: true, windJump: 0 }), true));
+  t('front: swing without rain', () => eq(w.isFrontLikely({ shiftDeg: 90, precipSoon: false, windJump: 0 }), false));
+  t('front: big wind jump alone', () => eq(w.isFrontLikely({ shiftDeg: 0, precipSoon: false, windJump: 8 }), true));
+  t('front: calm', () => eq(w.isFrontLikely({ shiftDeg: 10, precipSoon: false, windJump: 2 }), false));
+
+  t('bays beat humps when wind > 20', () => w.scoreSpot(spot('bay'), { ...base, windMph: 25 }).score > w.scoreSpot(spot('hump'), { ...base, windMph: 25 }).score || 'bay should win');
+  t('points beat bays in moderate wind', () => w.scoreSpot(spot('point'), base).score > w.scoreSpot(spot('bay'), base).score || 'point should win');
+  t('humps lose in dead calm', () => w.scoreSpot(spot('hump'), { ...base, windMph: 2 }).score < w.scoreSpot(spot('hump'), base).score || 'calm should hurt');
+  t('pre-frontal boosts structure', () => w.scoreSpot(spot('hump'), { ...base, frontLikely: true }).score > w.scoreSpot(spot('hump'), base).score || 'no boost');
+  t('walleye better evening than midday', () => w.scoreSpot(spot('bay'), { ...base, bucket: 'evening' }).score > w.scoreSpot(spot('bay'), { ...base, bucket: 'midday' }).score || 'wrong order');
+  t('smallmouth better midday than night', () => w.scoreSpot(spot('bay', ['smallmouth']), { ...base, bucket: 'midday' }).score > w.scoreSpot(spot('bay', ['smallmouth']), { ...base, bucket: 'night' }).score || 'wrong order');
+  t('multi-species uses best fit', () => w.scoreSpot(spot('bay', ['walleye', 'perch']), { ...base, bucket: 'midday' }).score >= w.scoreSpot(spot('bay', ['walleye']), { ...base, bucket: 'midday' }).score || 'should not be worse');
+
+  t('escapeHtml', () => eq(w.escapeHtml('<b>"x"</b>'), '&lt;b&gt;&quot;x&quot;&lt;/b&gt;'));
+  t('decodeEntities numeric', () => eq(w.decodeEntities('a &#8211; b &amp; c'), 'a – b & c'));
+  t('safeUrl blocks javascript:', () => eq(w.eval('safeUrl')('javascript:alert(1)'), '#'));
+  t('distance: 1 deg lat ≈ 69 mi', () => Math.abs(w.distanceMi([47, -92], [48, -92]) - 69) < 0.5 || 'off');
+  t('bearing north', () => eq(w.bearingLabel([47, -92], [48, -92]), 'N'));
+  t('classifyHour', () => eq(w.classifyHour(6), 'morning') === true && eq(w.classifyHour(13), 'midday') === true && eq(w.classifyHour(22), 'night') === true);
+  t('all SPOTS have valid kind + species', () => w.eval('SPOTS').every(s => ['bay', 'point', 'current', 'hump'].includes(s.kind) && s.species.every(x => w.eval('SPECIES_INFO')[x])) || 'bad spot');
+
+  const bad = results.filter(r => !r[1]).length;
+  document.getElementById('out').innerHTML = `<p class="${bad ? 'bad' : 'ok'}">${results.length - bad}/${results.length} passed</p>` +
+    results.map(([n, ok, d]) => `<div class="${ok ? 'ok' : 'bad'}">${ok ? '✓' : '✗'} ${n}${ok ? '' : ' — ' + d}</div>`).join('');
+  document.title = `${results.length - bad}/${results.length} passed`;
+});
+</script></body></html>
