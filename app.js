@@ -1,12 +1,15 @@
 // Lake Vermilion Fishing App
 
-const map = L.map('map', { zoomControl: false, attributionControl: true });
+const map = L.map('map', { zoomControl: false, attributionControl: true, preferCanvas: true });
 map.attributionControl.setPrefix(false); // drop the clickable "Leaflet" link, keep required OSM credit
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
+let fitting = false;
 function fitLake() {
+  fitting = true;
   map.invalidateSize();
   map.fitBounds(LAKE.bounds, { animate: false });
+  fitting = false;
 }
 fitLake();
 requestAnimationFrame(fitLake);
@@ -15,6 +18,13 @@ window.addEventListener('load', () => { if (map.getZoom() < 4) fitLake(); });
 // paint, which makes fitBounds fall back to zoom 0. Re-check shortly after load.
 setTimeout(() => { if (map.getZoom() < 4) fitLake(); }, 300);
 setTimeout(() => { if (map.getZoom() < 4) fitLake(); }, 1000);
+// Most robust of all: refit whenever the container gets its real size, until the
+// user has touched the map themselves.
+let userMoved = false;
+map.on('dragstart zoomstart', () => { if (!fitting) userMoved = true; });
+if ('ResizeObserver' in window) {
+  new ResizeObserver(() => { if (!userMoved && map.getZoom() < 4) fitLake(); }).observe(document.getElementById('map'));
+}
 
 const streets = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19,
@@ -44,6 +54,35 @@ document.getElementById('basemap-toggle').addEventListener('click', (e) => {
 // --- My Location ---
 let watchId = null;
 let locationMarker = null;
+let myPos = null; // [lat, lon] of the last GPS fix, null until located
+
+// Great-circle distance (haversine) in miles, plus 8-point compass bearing from me.
+function distanceMi(a, b) {
+  const R = 3958.8, rad = Math.PI / 180;
+  const dLat = (b[0] - a[0]) * rad, dLon = (b[1] - a[1]) * rad;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * rad) * Math.cos(b[0] * rad) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+function bearingLabel(a, b) {
+  const rad = Math.PI / 180;
+  const y = Math.sin((b[1] - a[1]) * rad) * Math.cos(b[0] * rad);
+  const x = Math.cos(a[0] * rad) * Math.sin(b[0] * rad) - Math.sin(a[0] * rad) * Math.cos(b[0] * rad) * Math.cos((b[1] - a[1]) * rad);
+  const deg = (Math.atan2(y, x) / rad + 360) % 360;
+  return ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(deg / 45) % 8];
+}
+// "3.4 mi NE" from the user's position, or '' when we don't have a fix.
+function distanceLabel(spot) {
+  if (!myPos) return '';
+  const to = [spot.lat, spot.lon];
+  const mi = distanceMi(myPos, to);
+  return `${mi < 10 ? mi.toFixed(1) : Math.round(mi)} mi ${bearingLabel(myPos, to)}`;
+}
+function refreshDistances() {
+  document.querySelectorAll('.pick-dist').forEach(el => {
+    const spot = SPOTS.find(s => s.id === el.dataset.spotId);
+    el.textContent = spot ? distanceLabel(spot) : '';
+  });
+}
 const locateBtn = document.getElementById('locate-toggle');
 const locationIcon = L.divIcon({
   className: '',
@@ -57,6 +96,8 @@ locateBtn.addEventListener('click', () => {
     navigator.geolocation.clearWatch(watchId);
     watchId = null;
     if (locationMarker) { map.removeLayer(locationMarker); locationMarker = null; }
+    myPos = null;
+    refreshDistances();
     locateBtn.classList.remove('active');
     locateBtn.textContent = 'My Location';
     return;
@@ -71,6 +112,8 @@ locateBtn.addEventListener('click', () => {
   watchId = navigator.geolocation.watchPosition(
     (pos) => {
       const ll = [pos.coords.latitude, pos.coords.longitude];
+      myPos = ll;
+      refreshDistances();
       if (!locationMarker) {
         locationMarker = L.marker(ll, { icon: locationIcon, zIndexOffset: 1000 }).addTo(map);
       } else {
@@ -91,6 +134,57 @@ locateBtn.addEventListener('click', () => {
     },
     { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
   );
+});
+
+// --- My waypoints: saved only on this device (localStorage), never uploaded. ---
+// "Mark Spot" drops a flag at your GPS position if located, otherwise at the map
+// center. Tap a flag to rename or delete it.
+const WP_KEY = 'lv-waypoints-v1';
+function loadWaypoints() {
+  try { return JSON.parse(localStorage.getItem(WP_KEY)) || []; } catch { return []; }
+}
+function saveWaypoints(list) {
+  try { localStorage.setItem(WP_KEY, JSON.stringify(list)); } catch { /* private mode etc. */ }
+}
+let waypoints = loadWaypoints();
+const wpMarkers = {};
+const wpIcon = L.divIcon({
+  className: '',
+  html: '<div style="width:14px;height:14px;background:#f5b400;border:2px solid #fff;transform:rotate(45deg);box-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>',
+  iconSize: [14, 14], iconAnchor: [7, 7]
+});
+function wpPopup(wp) {
+  const d = new Date(wp.t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return `<b>${safeText(wp.name)}</b><br><span class="muted">${d} · ${wp.lat.toFixed(5)}, ${wp.lon.toFixed(5)}</span><br>` +
+    `<a href="#" data-wp="${wp.id}" data-act="rename">Rename</a> · <a href="#" data-wp="${wp.id}" data-act="delete">Delete</a>`;
+}
+function addWaypointMarker(wp) {
+  const m = L.marker([wp.lat, wp.lon], { icon: wpIcon }).bindPopup(() => wpPopup(wp)).addTo(map);
+  wpMarkers[wp.id] = m;
+}
+waypoints.forEach(addWaypointMarker);
+document.getElementById('mark-toggle').addEventListener('click', () => {
+  const ll = myPos || [map.getCenter().lat, map.getCenter().lng];
+  const wp = { id: String(Date.now()), name: `Spot ${waypoints.length + 1}`, lat: ll[0], lon: ll[1], t: Date.now() };
+  waypoints.push(wp);
+  saveWaypoints(waypoints);
+  addWaypointMarker(wp);
+  wpMarkers[wp.id].openPopup();
+});
+document.addEventListener('click', (e) => {
+  const a = e.target.closest && e.target.closest('a[data-wp]');
+  if (!a) return;
+  e.preventDefault();
+  const wp = waypoints.find(w => w.id === a.dataset.wp);
+  if (!wp) return;
+  if (a.dataset.act === 'delete') {
+    map.removeLayer(wpMarkers[wp.id]); delete wpMarkers[wp.id];
+    waypoints = waypoints.filter(w => w.id !== wp.id);
+  } else {
+    const name = prompt('Name this spot', wp.name);
+    if (name && name.trim()) { wp.name = name.trim().slice(0, 40); wpMarkers[wp.id].setPopupContent(wpPopup(wp)); }
+  }
+  saveWaypoints(waypoints);
 });
 
 // --- Bathymetry: real MN DNR contour data, rendered client-side so lines stay ---
@@ -124,12 +218,28 @@ const bathyLines = L.layerGroup();
 const bathyLabels = L.layerGroup();
 let bathyVisible = true;
 
+// Depth labels are 900+ markers; only build them the first time the user zooms in
+// far enough to see them.
+const labelData = [];
+let labelsBuilt = false;
+function buildBathyLabels() {
+  if (labelsBuilt) return;
+  labelsBuilt = true;
+  for (const { mid, depth } of labelData) {
+    bathyLabels.addLayer(L.marker(mid, {
+      icon: L.divIcon({ className: 'depth-label', html: `${Math.abs(depth)}`, iconSize: [20, 14], iconAnchor: [10, 7] }),
+      interactive: false
+    }));
+  }
+}
+
 function updateBathyLabelVisibility() {
   if (!bathyVisible) {
     if (map.hasLayer(bathyLabels)) map.removeLayer(bathyLabels);
     return;
   }
   if (map.getZoom() >= 13) {
+    buildBathyLabels();
     if (!map.hasLayer(bathyLabels)) bathyLabels.addTo(map);
   } else if (map.hasLayer(bathyLabels)) {
     map.removeLayer(bathyLabels);
@@ -157,16 +267,7 @@ function loadBathymetry() {
       });
       bathyLines.addLayer(poly);
       if (!isShoreline) {
-        const mid = coords[Math.floor(coords.length / 2)];
-        bathyLabels.addLayer(L.marker(mid, {
-          icon: L.divIcon({
-            className: 'depth-label',
-            html: `${Math.abs(depth)}`,
-            iconSize: [20, 14],
-            iconAnchor: [10, 7]
-          }),
-          interactive: false
-        }));
+        labelData.push({ mid: coords[Math.floor(coords.length / 2)], depth });
       }
     }
     bathyLines.addTo(map);
@@ -175,7 +276,13 @@ function loadBathymetry() {
     console.error('Bathymetry load failed', err);
   }
 }
-loadBathymetry();
+// bathymetry.js is ~500KB; load it after first paint so the map, spots and weather
+// show up immediately instead of waiting on it.
+const bathyScript = document.createElement('script');
+bathyScript.src = 'bathymetry.js';
+bathyScript.onload = loadBathymetry;
+bathyScript.onerror = () => console.error('bathymetry.js failed to load');
+document.head.appendChild(bathyScript);
 
 // --- Bathymetry toggle ---
 const bathyBtn = document.getElementById('bathy-toggle');
@@ -293,6 +400,14 @@ function idealTextColor(hex) {
   return luminance > 0.55 ? '#12141c' : '#ffffff';
 }
 
+// The spot writeups are hand-curated for a season; say so once they're getting old
+// instead of presenting them as current.
+function spotNotesAgeHtml() {
+  const age = Math.floor(daysOld(LAST_UPDATED));
+  if (age <= 30) return '';
+  return `<p class="stale-flag">These spot notes were last reviewed ${age} days ago — patterns shift with the season (fall turnover especially), so check against the current report.</p>`;
+}
+
 function openSpotPanel(spot) {
   closeAllSheets();
   const tags = spot.species.map(s => {
@@ -310,7 +425,7 @@ function openSpotPanel(spot) {
   }
   document.getElementById('spot-detail').innerHTML = `
     <p class="spot-title">${spot.name}</p>
-    <p class="spot-structure">${spot.structure}</p>
+    <p class="spot-structure">${spot.structure}${myPos ? ` · <b>${distanceLabel(spot)}</b> from you` : ''}</p>
     <div class="species-tags">${tags}</div>
     <p class="spot-label">Why this spot right now</p>
     <p>${spot.why}</p>
@@ -319,6 +434,7 @@ function openSpotPanel(spot) {
     <p class="spot-label">Best conditions</p>
     <p>${spot.bestConditions}</p>
     ${todayFitHtml}
+    ${spotNotesAgeHtml()}
   `;
   spotPanel.classList.remove('hidden');
   map.setView([spot.lat, spot.lon], Math.max(map.getZoom(), 13));
@@ -339,6 +455,24 @@ function daysOld(dateStr) {
   const ms = Date.now() - new Date(dateStr + 'T00:00:00').getTime();
   return ms / (1000 * 60 * 60 * 24);
 }
+// Scraped text can carry leftover HTML entities (&#8211; etc.) and is untrusted, so
+// decode the common ones, then escape everything before it goes into innerHTML.
+function escapeHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function decodeEntities(str) {
+  const named = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', hellip: '…', ndash: '–', mdash: '—', rsquo: '’', lsquo: '‘', rdquo: '”', ldquo: '“' };
+  return String(str == null ? '' : str)
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(+n))
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&([a-z]+);/gi, (m, n) => named[n.toLowerCase()] !== undefined ? named[n.toLowerCase()] : m);
+}
+const safeText = (str) => escapeHtml(decodeEntities(str));
+// Only allow http(s) links from scraped data.
+const safeUrl = (u) => /^https?:\/\//i.test(u || '') ? escapeHtml(u) : '#';
+
 function reportCard(report, isStale) {
   const age = Math.floor(daysOld(report.date));
   const ageLabel = age <= 0 ? 'today' : age === 1 ? '1 day ago' : `${age} days ago`;
@@ -346,15 +480,15 @@ function reportCard(report, isStale) {
   // guide's own site — no AI summarizing. Older hand-curated entries (if any) carry
   // a summary + techniquesSeen list instead. Render whichever the report has.
   const body = report.techniquesSeen
-    ? `<p>${report.summary}</p><ul class="techniques">${report.techniquesSeen.map(t => `<li>${t}</li>`).join('')}</ul>`
-    : `<p>${report.rawText || report.summary || ''}</p>`;
+    ? `<p>${safeText(report.summary)}</p><ul class="techniques">${report.techniquesSeen.map(t => `<li>${safeText(t)}</li>`).join('')}</ul>`
+    : `<p>${safeText(report.rawText || report.summary || '')}</p>`;
   return `
     <div class="report-card">
-      <h3>${report.source} <span class="muted">— ${report.date} (${ageLabel})</span></h3>
+      <h3>${safeText(report.source)} <span class="muted">— ${report.date} (${ageLabel})</span></h3>
       ${isStale ? `<p class="stale-flag">No report in the last ${REPORT_MAX_AGE_DAYS} days — showing the most recent one available.</p>` : ''}
-      ${report.waterTempF ? `<p>Water temp: <b>${report.waterTempF}°F</b></p>` : ''}
+      ${report.waterTempF ? `<p>Water temp: <b>${safeText(report.waterTempF)}°F</b></p>` : ''}
       ${body}
-      <p class="report-source">Source: <a href="${report.sourceUrl}" target="_blank" rel="noopener">${report.source}</a>${!report.techniquesSeen ? ' <span class="muted">(auto-pulled, unedited)</span>' : ''}</p>
+      <p class="report-source">Source: <a href="${safeUrl(report.sourceUrl)}" target="_blank" rel="noopener">${safeText(report.source)}</a>${!report.techniquesSeen ? ' <span class="muted">(auto-pulled, unedited)</span>' : ''}</p>
     </div>
   `;
 }
@@ -388,11 +522,20 @@ const thinData = recentReports.length < 2;
 const historyIntro = thinData
   ? "Not many current reports this week, so here's what these same guides were seeing this time in past years — useful mainly if the weather's been similar."
   : "For context, here's what these same guides were seeing this same week in past years.";
-const historyHtml = HISTORICAL_REPORTS.length > 0 ? `
+// Only entries within ~10 days of today's calendar date count as "same week".
+function daysFromToday(md) { // md = "MM-DD"
+  const [m, d] = md.split('-').map(Number);
+  const now = new Date();
+  const t = new Date(now.getFullYear(), m - 1, d);
+  const diff = Math.abs(t - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000;
+  return Math.min(diff, 365 - diff);
+}
+const nearHistory = HISTORICAL_REPORTS.filter(r => !r.weekOf || daysFromToday(r.weekOf) <= 10);
+const historyHtml = nearHistory.length > 0 ? `
   <div class="history-section">
     <p class="spot-label">Same week, past years</p>
     <p class="muted">${historyIntro}</p>
-    ${HISTORICAL_REPORTS.map(historyCard).join('')}
+    ${nearHistory.map(historyCard).join('')}
   </div>
 ` : '';
 
@@ -456,6 +599,13 @@ function maxWindMph(speedStr) {
 // than reading a barometer directly. Good enough for the well-known rule (fish
 // feed harder ahead of a front, go quiet behind one) without adding a second
 // live data source.
+// Single definition of "a front is likely", shared by the daily and hourly paths so
+// they can't drift apart: a big wind-direction swing with rain nearby, or a sharp
+// jump in wind speed.
+function isFrontLikely({ shiftDeg, precipSoon, windJump }) {
+  return (shiftDeg >= 67 && precipSoon) || windJump >= 8;
+}
+
 function computeTodayFactors(periods) {
   const p0 = periods[0], p1 = periods[1], p2 = periods[2];
   const d0 = dirToDeg(p0.windDirection);
@@ -463,11 +613,11 @@ function computeTodayFactors(periods) {
   const shift = (d0 !== null && d2 !== null) ? angleDiff(d0, d2) : 0;
   const precipSoon = periods.slice(0, 3).some(p => /rain|shower|thunderstorm|snow|drizzle/i.test(p.shortForecast));
   const windJump = p1 ? maxWindMph(p1.windSpeed) - maxWindMph(p0.windSpeed) : 0;
-  const frontLikely = (shift >= 67 && precipSoon) || windJump >= 8;
+  const frontLikely = isFrontLikely({ shiftDeg: shift, precipSoon, windJump });
   const windMph = maxWindMph(p0.windSpeed);
   const lowLight = /cloud|overcast|rain|shower|storm|fog|drizzle/i.test(p0.shortForecast) && !/sunny|clear/i.test(p0.shortForecast);
   const brightCalm = /sunny|clear/i.test(p0.shortForecast) && windMph < 8;
-  return { p0, p1, p2, windMph, frontLikely, precipSoon, lowLight, brightCalm };
+  return { p0, p1, p2, windMph, frontLikely, precipSoon, lowLight, brightCalm, bucket: currentBucketKey() };
 }
 
 function computeWeatherAngle(f) {
@@ -548,7 +698,7 @@ function buildHourlyBuckets(hourly) {
   const next24 = next48.slice(0, 24);
   const precipSoon = next24.some(h => /rain|shower|thunderstorm|snow|drizzle/i.test(h.shortForecast));
   const windJump = Math.max(...next24.map(h => maxWindMph(h.windSpeed))) - maxWindMph(next48[0].windSpeed);
-  const frontLikelyGlobal = (shiftDate && precipSoon) || windJump >= 8;
+  const frontLikelyGlobal = isFrontLikely({ shiftDeg: shiftDate ? 90 : 0, precipSoon, windJump });
 
   const result = {};
   Object.keys(BUCKET_LABELS).forEach(bucket => {
@@ -565,7 +715,7 @@ function buildHourlyBuckets(hourly) {
     const dayLabel = bucketGroupDate(bucketStart) === bucketGroupDate(now) ? 'Today' : 'Tomorrow';
     const timeFmt = (d) => d.toLocaleTimeString('en-US', { hour: 'numeric' });
     result[bucket] = {
-      windMph, precipSoon, lowLight, brightCalm,
+      bucket, windMph, precipSoon, lowLight, brightCalm,
       frontLikely: frontLikelyGlobal && (!shiftDate || bucketStart < shiftDate),
       rangeLabel: `${dayLabel}, ${timeFmt(bucketStart)}–${timeFmt(bucketEnd)}`
     };
@@ -582,6 +732,35 @@ function buildHourlyBuckets(hourly) {
 // humps). This is deliberately simple, transparent rule-based scoring — not a
 // black box — so "why is this spot ranked here today" always has a one-line
 // answer.
+// Rule-of-thumb feeding windows by species. `bucket` is morning/midday/evening/night
+// (may be undefined if the hourly forecast failed, in which case only the light and
+// front terms apply). Returns a score nudge and a short reason when it's a strong fit.
+const SPECIES_BUCKET_FIT = {
+  walleye:    { morning: 8, midday: -6, evening: 12, night: 10 },   // low-light feeders
+  smallmouth: { morning: 4, midday: 8,  evening: 8,  night: -8 },   // sight feeders, warmest part of the day
+  muskie:     { morning: 6, midday: 0,  evening: 12, night: 2 },    // dawn/dusk ambush
+  perch:      { morning: 6, midday: 8,  evening: 4,  night: -8 },   // daytime schooling
+  crappie:    { morning: 8, midday: 0,  evening: 10, night: 2 }     // early/late shallow feeding
+};
+const SPECIES_FIT_REASON = {
+  walleye:    { evening: 'prime walleye window at dusk', night: 'walleye feed after dark', morning: 'good early walleye bite' },
+  smallmouth: { midday: 'smallmouth bite peaks in the warm part of the day', evening: 'smallmouth are active in evening light' },
+  muskie:     { evening: 'classic evening muskie window', morning: 'early muskie window' },
+  perch:      { midday: 'perch school up and feed through the day' },
+  crappie:    { evening: 'crappie move shallow at dusk', morning: 'crappie feed shallow at first light' }
+};
+function speciesFit(species, f) {
+  let delta = 0, reason = null;
+  const byBucket = SPECIES_BUCKET_FIT[species];
+  if (byBucket && f.bucket && byBucket[f.bucket] !== undefined) {
+    delta += byBucket[f.bucket];
+    reason = (SPECIES_FIT_REASON[species] || {})[f.bucket] || null;
+  }
+  // Fish feed harder ahead of a front, especially the aggressive predators.
+  if (f.frontLikely && (species === 'muskie' || species === 'walleye')) { delta += 4; }
+  return { delta, reason };
+}
+
 function scoreSpot(spot, f) {
   let score = 50;
   let reason = null;
@@ -615,6 +794,20 @@ function scoreSpot(spot, f) {
     if (isHump) { score += 12; setReason("bright, calm skies today push fish to deeper structure like this"); }
     else if (isBay) { score -= 6; }
     if (spot.species.includes('muskie')) { score += 4; setReason('good bright-light window for muskie sight-feeding'); }
+  }
+
+  // Species fit: each species has a time of day it feeds best and a light/front
+  // preference. Use the spot's best-fitting species (a spot listing several species
+  // is only as good as its best one right now), weighted so it nudges the ranking
+  // rather than overriding the structure/wind logic above.
+  let bestSpecies = -Infinity, bestSpeciesReason = null;
+  for (const sp of spot.species) {
+    const fit = speciesFit(sp, f);
+    if (fit.delta > bestSpecies) { bestSpecies = fit.delta; bestSpeciesReason = fit.reason; }
+  }
+  if (isFinite(bestSpecies)) {
+    score += bestSpecies;
+    if (bestSpecies >= 8 && bestSpeciesReason) reason = reason ? `${reason}; ${bestSpeciesReason}` : bestSpeciesReason;
   }
 
   return { score, reason: reason || 'solid all-around structure regardless of today\'s specific conditions' };
@@ -653,7 +846,7 @@ function renderTodaysPicks(input, selectedKey) {
       ${top.map(({ spot, reason }) => `
         <button class="pick-item" data-spot-id="${spot.id}">
           <span class="pick-dot" style="background:${primaryColor(spot)}"></span>
-          <span class="pick-text"><b>${spot.name}</b><br><span class="muted">${reason}</span></span>
+          <span class="pick-text"><b>${spot.name}</b> <span class="pick-dist muted" data-spot-id="${spot.id}">${distanceLabel(spot)}</span><br><span class="muted">${reason}</span></span>
         </button>
       `).join('')}
     </div>
