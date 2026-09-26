@@ -67,6 +67,12 @@ document.getElementById('app').addEventListener('load', () => {
   t('rising barometer favors sheltered bays over humps', () => { const c = { phase: null, signals: null, pressure: { label: 'rising', d3: 2 } }; return w.scoreSpot(spot('bay'), { ...base, ctx: c }).score > w.scoreSpot(spot('hump'), { ...base, ctx: c }).score || 'wrong'; });
   t('seasonAdviceForSpot mentions each species', () => { const a = w.seasonAdviceForSpot({ species: ['walleye', 'perch'], depth: [12, 20] }, ctxTurn.phase); return a && a.parts.length === 2 || 'bad'; });
 
+  t('sonar: no thermocline + cooling water => turnover', () => { const r = w.interpretSonar({ thermo: 'no' }, 58, 'early-fall'); return r.phaseKey === 'turnover' && r.overridden || JSON.stringify(r); });
+  t('sonar: no thermocline in warm water does not force turnover', () => eq(w.interpretSonar({ thermo: 'no' }, 66, 'early-fall').phaseKey, 'early-fall'));
+  t('sonar: distinct thermocline blocks turnover', () => { const r = w.interpretSonar({ thermo: 'yes', depth: 24 }, 52, 'turnover'); return r.phaseKey === 'early-fall' && r.thermoDepth === 24 || JSON.stringify(r); });
+  t('sonar: none => no change', () => eq(w.interpretSonar(null, 52, 'turnover').phaseKey, 'turnover'));
+  t('sonar: heavy clutter note differs in turnover', () => w.interpretSonar({ clutter: 'heavy' }, 52, 'turnover').notes[0] !== w.interpretSonar({ clutter: 'heavy' }, 66, 'early-fall').notes[0] || 'same');
+  t('spot below marked thermocline scores lower', () => { const c = { phase: null, signals: null, pressure: null, thermoDepth: 20 }; return w.scoreSpot({ kind: 'bay', species: ['walleye'], depth: [28, 34] }, { ...base, ctx: c }).score < w.scoreSpot({ kind: 'bay', species: ['walleye'], depth: [12, 18] }, { ...base, ctx: c }).score || 'no penalty'; });
   const bad = results.filter(r => !r[1]).length;
   document.getElementById('out').innerHTML = `<p class="${bad ? 'bad' : 'ok'}">${results.length - bad}/${results.length} passed</p>` +
     results.map(([n, ok, d]) => `<div class="${ok ? 'ok' : 'bad'}">${ok ? '✓' : '✗'} ${n}${ok ? '' : ' — ' + d}</div>`).join('');
