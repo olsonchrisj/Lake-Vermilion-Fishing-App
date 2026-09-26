@@ -220,3 +220,44 @@ function seasonAdviceForSpot(spot, phase) {
   }).filter(Boolean);
   return parts.length ? { phaseLabel: phase.label, blurb: phase.blurb, parts } : null;
 }
+
+// --- Sonar read (entered by the angler on the water) --------------------------
+// sonar: { thermo: 'yes' | 'weak' | 'no' | null, depth: number | null, clutter: 'clean' | 'some' | 'heavy' | null }
+// A visible thermocline means the lake is still layered (pre-turnover); no thermocline
+// while the water is cooling means it has mixed (turnover). That's a better turnover
+// signal than temperature alone, so it can override the temperature-based phase.
+function interpretSonar(sonar, waterTempF, phaseKey) {
+  const out = { phaseKey, notes: [], thermoDepth: null, overridden: false };
+  if (!sonar) return out;
+  const t = sonar.thermo;
+  if (t === 'no') {
+    if ((phaseKey === 'early-fall' || phaseKey === 'summer') && waterTempF <= 62) {
+      out.phaseKey = 'turnover'; out.overridden = true;
+      out.notes.push('No thermocline on the graph while the water is cooling means the lake has mixed, so treat it as turnover even if the temperature alone says early fall.');
+    } else if (phaseKey === 'turnover' || phaseKey === 'late-fall') {
+      out.notes.push('No thermocline confirms the water has mixed, which fits turnover / late fall.');
+    } else {
+      out.notes.push('No thermocline: the water is mixed top to bottom, so fish can use any depth.');
+    }
+  } else if (t === 'weak') {
+    out.notes.push('A weak, fuzzy thermocline usually means it is breaking down. Turnover is close, so start planning to cover water and fish higher.');
+  } else if (t === 'yes') {
+    out.thermoDepth = sonar.depth > 0 ? sonar.depth : null;
+    if (phaseKey === 'turnover') {
+      out.phaseKey = 'early-fall'; out.overridden = true;
+      out.notes.push('A distinct thermocline means the lake is still layered, so turnover has not happened yet even though the temperature is in the turnover range. Stay on the pre-turnover pattern.');
+    }
+    out.notes.push(out.thermoDepth
+      ? `Thermocline at about ${out.thermoDepth} ft: fish usually hold at or above it, and the water below can hold less oxygen and fewer fish.`
+      : 'Thermocline present: fish usually hold at or above it.');
+  }
+  if (sonar.clutter === 'heavy') {
+    out.notes.push(out.phaseKey === 'turnover'
+      ? 'Heavy clutter fits turnover (particles, algae and scattered fish). Expect fish suspended and scattered, so cover water and work higher in the water column.'
+      : 'Heavy clutter: lots of bait or fish marks. Fish are here, so slow down and work the marks instead of running.');
+  } else if (sonar.clutter === 'clean') {
+    out.notes.push('Clean graph: few marks. Fish are either elsewhere or tight to bottom, so keep moving until you mark bait.');
+  }
+  return out;
+}
+function phaseFromKey(key) { return { key, ...PHASES[key] }; }
