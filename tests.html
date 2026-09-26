@@ -34,6 +34,35 @@ document.getElementById('app').addEventListener('load', () => {
   t('classifyHour', () => eq(w.classifyHour(6), 'morning') === true && eq(w.classifyHour(13), 'midday') === true && eq(w.classifyHour(22), 'night') === true);
   t('all SPOTS have valid kind + species', () => w.eval('SPOTS').every(s => ['bay', 'point', 'current', 'hump'].includes(s.kind) && s.species.every(x => w.eval('SPECIES_INFO')[x])) || 'bad spot');
 
+  // --- analysis.js ---
+  const D = (y, m, d) => new Date(y, m - 1, d, 12);
+  t('climatology Aug 5 is the warmest (~75)', () => Math.abs(w.climatologyWaterTemp(D(2026, 8, 5)) - 75) < 1 || 'off');
+  t('climatology falls through September', () => w.climatologyWaterTemp(D(2026, 9, 28)) < w.climatologyWaterTemp(D(2026, 9, 5)) || 'not falling');
+  t('parseTempRange', () => eq(w.parseTempRange('69–72'), 70.5));
+  t('water temp prefers a fresh report', () => eq(w.estimateWaterTemp([{ date: '2026-09-24', waterTempF: '58–60' }], D(2026, 9, 26)).source, 'guide report'));
+  t('water temp ignores stale report', () => eq(w.estimateWaterTemp([{ date: '2026-08-01', waterTempF: '70–72' }], D(2026, 9, 26)).source, 'seasonal average'));
+  t('phase: 68F in Aug = summer', () => eq(w.seasonPhase(D(2026, 8, 20), 70).key, 'summer'));
+  t('phase: 60F in Sept = early-fall', () => eq(w.seasonPhase(D(2026, 9, 12), 60).key, 'early-fall'));
+  t('phase: 54F in Oct = turnover', () => eq(w.seasonPhase(D(2026, 10, 5), 54).key, 'turnover'));
+  t('phase: 44F in Nov = late-fall', () => eq(w.seasonPhase(D(2026, 11, 8), 44).key, 'late-fall'));
+  t('phase: 45F in May = spring-spawn (warming, not fall)', () => eq(w.seasonPhase(D(2026, 5, 5), 45).key, 'spring-spawn'));
+  t('phase: 55F in May = post-spawn', () => eq(w.seasonPhase(D(2026, 5, 25), 55).key, 'post-spawn'));
+  const obs = (arr) => arr.map(([hAgo, pa]) => ({ properties: { timestamp: new Date(Date.UTC(2026, 8, 26, 12) - hAgo * 3600000).toISOString(), barometricPressure: { value: pa } } }));
+  t('pressure falling', () => eq(w.pressureTrend(obs([[0, 100800], [1, 101000], [3, 101300], [6, 101700], [12, 102100]])).label, 'falling'));
+  t('pressure rising', () => eq(w.pressureTrend(obs([[0, 102000], [1, 101800], [3, 101500], [6, 101100], [12, 100800]])).label, 'rising'));
+  t('pressure steady + high flag', () => { const p = w.pressureTrend(obs([[0, 102100], [1, 102100], [3, 102150], [6, 102200], [12, 102200]])); return p.label === 'steady' && p.high === true || 'wrong'; });
+  t('pressure needs enough data', () => eq(w.pressureTrend(obs([[0, 102000]])), null));
+  t('report depths parsed (12 to 25 feet, 28-34 ft)', () => { const s = w.parseReportSignals([{ date: '2026-09-24', rawText: 'Walleyes in 12 to 25 feet on a Lindy Rig with leeches. Also 28-34 ft trolling.' }], D(2026, 9, 26), 14); return s.rangeCount === 2 && s.techniques.includes('lindy rig / live-bait rig') || JSON.stringify(s); });
+  t('old reports ignored for signals', () => eq(w.parseReportSignals([{ date: '2026-08-01', rawText: 'fish in 10-15 ft' }], D(2026, 9, 26), 14).reportCount, 0));
+  t('depthOverlap full/partial/none', () => w.depthOverlap([10, 20], [8, 30]) === 1 && Math.abs(w.depthOverlap([10, 20], [15, 40]) - 0.5) < 1e-9 && w.depthOverlap([10, 20], [25, 30]) === 0 || 'bad');
+  t('all SPOTS have a depth range', () => w.eval('SPOTS').every(s => Array.isArray(s.depth) && s.depth[0] < s.depth[1]) || 'missing depth');
+  const ctxTurn = { phase: w.seasonPhase(D(2026, 10, 5), 54), signals: null, pressure: null };
+  t('in-season depth beats off-season depth', () => w.scoreSpot({ kind: 'hump', species: ['walleye'], depth: [12, 20] }, { ...base, ctx: ctxTurn }).score > w.scoreSpot({ kind: 'hump', species: ['walleye'], depth: [40, 50] }, { ...base, ctx: ctxTurn }).score || 'depth ignored');
+  t('guide-reported depth boosts overlapping spot', () => { const c = { phase: null, signals: { hotDepth: [12, 25] }, pressure: null }; return w.scoreSpot({ kind: 'hump', species: ['walleye'], depth: [14, 22] }, { ...base, ctx: c }).score > w.scoreSpot({ kind: 'hump', species: ['walleye'], depth: [30, 40] }, { ...base, ctx: c }).score || 'no boost'; });
+  t('falling barometer boosts structure over bays', () => { const c = { phase: null, signals: null, pressure: { label: 'falling', d3: -2 } }; return w.scoreSpot(spot('hump'), { ...base, ctx: c }).score > w.scoreSpot(spot('bay'), { ...base, ctx: c }).score || 'no boost'; });
+  t('rising barometer favors sheltered bays over humps', () => { const c = { phase: null, signals: null, pressure: { label: 'rising', d3: 2 } }; return w.scoreSpot(spot('bay'), { ...base, ctx: c }).score > w.scoreSpot(spot('hump'), { ...base, ctx: c }).score || 'wrong'; });
+  t('seasonAdviceForSpot mentions each species', () => { const a = w.seasonAdviceForSpot({ species: ['walleye', 'perch'], depth: [12, 20] }, ctxTurn.phase); return a && a.parts.length === 2 || 'bad'; });
+
   const bad = results.filter(r => !r[1]).length;
   document.getElementById('out').innerHTML = `<p class="${bad ? 'bad' : 'ok'}">${results.length - bad}/${results.length} passed</p>` +
     results.map(([n, ok, d]) => `<div class="${ok ? 'ok' : 'bad'}">${ok ? '✓' : '✗'} ${n}${ok ? '' : ' — ' + d}</div>`).join('');
