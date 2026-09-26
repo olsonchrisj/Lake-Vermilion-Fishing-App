@@ -13,7 +13,7 @@ const LAKE = {
   weatherPoint: { lat: 47.8791, lon: -92.4634, gridId: "DLH", gridX: 78, gridY: 121 }
 };
 
-const LAST_UPDATED = "2026-09-15";
+const LAST_UPDATED = "2026-09-26";
 
 // Reports used to be hand-typed here. They're now pulled automatically — see
 // reports.auto.js, regenerated daily by a GitHub Actions workflow
@@ -27,11 +27,13 @@ const REPORT_MAX_AGE_DAYS = 14;
 // Same-week reports from prior years, used as a supplementary signal when current
 // reports are thin — same guide sources, same rough calendar week, on the logic
 // that fish patterning repeats fairly reliably year to year given similar weather.
-// These are always shown, but clearly labeled as history, not current conditions —
+// Each entry has a weekOf ("MM-DD"); app.js only shows entries within ~10 days of today.
+// These are shown when in season, clearly labeled as history, not current conditions —
 // they don't get pulled into the "why this spot right now" reasoning for pins.
 const HISTORICAL_REPORTS = [
   {
     year: 2025,
+    weekOf: "09-02",
     dateRange: "Sept 2–8, 2025",
     source: "Fishing with Z (Zach Hrvol)",
     sourceUrl: "https://fishingwithz.com/september-2-8-2025/",
@@ -44,6 +46,7 @@ const HISTORICAL_REPORTS = [
   },
   {
     year: 2024,
+    weekOf: "09-03",
     dateRange: "Sept 3–9, 2024",
     source: "Fishing with Z (Zach Hrvol)",
     sourceUrl: "https://fishingwithz.com/september-3-9-2024/",
