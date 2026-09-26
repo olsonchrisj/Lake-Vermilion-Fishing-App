@@ -604,9 +604,37 @@ function agoLabel(ms) {
   const h = Math.round(m / 60);
   return h < 36 ? `${h} h ago` : `${Math.round(h / 24)} days ago`;
 }
+// Sonar read you enter on the water: thermocline (yes/weak/no + depth) and graph
+// clutter. Also device-only, and expires sooner than the temperature because
+// conditions change quickly around turnover.
+const SONAR_KEY = 'lv-sonar-v1';
+const SONAR_MAX_AGE_DAYS = 3;
+function loadSonar() {
+  try {
+    const v = JSON.parse(localStorage.getItem(SONAR_KEY));
+    if (v && Date.now() - v.t < SONAR_MAX_AGE_DAYS * 86400000) return v;
+  } catch (e) { /* storage unavailable */ }
+  return null;
+}
+function setSonar(patch) {
+  const cur = loadSonar() || { thermo: null, depth: null, clutter: null };
+  const next = patch === null ? null : { ...cur, ...patch, t: Date.now() };
+  if (next && next.thermo === 'no') next.depth = null;
+  const empty = !next || (!next.thermo && !next.clutter);
+  try { if (empty) localStorage.removeItem(SONAR_KEY); else localStorage.setItem(SONAR_KEY, JSON.stringify(next)); } catch (e) { /* ignore */ }
+  refreshAnalysis();
+  renderAnalysisCard();
+  if (window.__todayFactorsByBucket) renderTodaysPicks(window.__todayFactorsByBucket, window.__selectedBucketKey);
+  else if (window.__todayFactors) renderTodaysPicks(window.__todayFactors);
+}
+
 const analysisContext = {
   waterTemp: null,
   phase: null,
+  sonar: null,
+  sonarNotes: [],
+  thermoDepth: null,
+  phaseFromSonar: false,
   signals: parseReportSignals(rawReports, analysisNow, REPORT_MAX_AGE_DAYS),
   pressure: null
 };
@@ -617,7 +645,15 @@ function refreshAnalysis() {
   analysisContext.waterTemp = manual
     ? { tempF: manual.tempF, source: `your reading, ${agoLabel(manual.t)}`, manual: true }
     : estimateWaterTemp(rawReports, new Date());
-  analysisContext.phase = seasonPhase(new Date(), analysisContext.waterTemp.tempF);
+  const tempPhase = seasonPhase(new Date(), analysisContext.waterTemp.tempF);
+  // What you see on the graph can override what the temperature alone suggests.
+  const sonar = loadSonar();
+  const read = interpretSonar(sonar, analysisContext.waterTemp.tempF, tempPhase.key);
+  analysisContext.sonar = sonar;
+  analysisContext.sonarNotes = read.notes;
+  analysisContext.thermoDepth = read.thermoDepth;
+  analysisContext.phaseFromSonar = read.overridden;
+  analysisContext.phase = read.overridden ? phaseFromKey(read.phaseKey) : tempPhase;
 }
 refreshAnalysis();
 function setManualWaterTemp(tempF) {
@@ -647,7 +683,7 @@ async function loadPressure() {
 }
 
 function renderAnalysisCard() {
-  const { phase, waterTemp: wt, signals, pressure } = analysisContext;
+  const { phase, waterTemp: wt, signals, pressure, sonar } = analysisContext;
   let el = document.getElementById('analysis-block');
   if (!el) {
     el = document.createElement('div');
@@ -676,6 +712,22 @@ function renderAnalysisCard() {
       ${[68, 62, 57, 53, 48, 42].map(t => `<button class="time-pill wt-chip" data-t="${t}">${t}°</button>`).join('')}
     </div>
     <p class="muted" style="font-size:11.5px;margin-top:4px;">Type the surface temp from your sonar once you're on the water, or tap a temperature to see how the advice changes. It's saved on this device for ${WT_MAX_AGE_DAYS} days.</p>
+    <p class="spot-label">Sonar read</p>
+    <div class="time-toggle" style="margin-top:0;">
+      ${[['no', 'No thermocline'], ['weak', 'Weak'], ['yes', 'Thermocline']].map(([k, l]) =>
+        `<button class="time-pill sonar-thermo${sonar && sonar.thermo === k ? ' active' : ''}" data-k="${k}">${l}</button>`).join('')}
+      ${sonar && (sonar.thermo === 'yes' || sonar.thermo === 'weak')
+        ? `<input id="thermo-depth" type="number" inputmode="numeric" min="3" max="80" step="1" placeholder="ft" value="${sonar.depth || ''}"
+            style="width:64px;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:rgba(255,255,255,0.06);color:var(--text);font-size:14px;" />` : ''}
+    </div>
+    <div class="time-toggle">
+      ${[['clean', 'Clean graph'], ['some', 'Some clutter'], ['heavy', 'Heavy clutter']].map(([k, l]) =>
+        `<button class="time-pill sonar-clutter${sonar && sonar.clutter === k ? ' active' : ''}" data-k="${k}">${l}</button>`).join('')}
+      ${sonar ? '<button class="time-pill" id="sonar-clear">Clear</button>' : ''}
+    </div>
+    <p class="muted" style="font-size:11.5px;margin-top:4px;">Optional: what you see on the graph. A thermocline shows as a band where fish and bait stack at one depth. Saved on this device for ${SONAR_MAX_AGE_DAYS} days.</p>
+    ${analysisContext.sonarNotes.length ? `<ul class="techniques">${analysisContext.sonarNotes.map(n => `<li>${n}</li>`).join('')}</ul>` : ''}
+    ${analysisContext.phaseFromSonar ? '<p class="muted" style="font-size:11.5px;">Season phase set from your sonar read, not the temperature.</p>' : ''}
     <p class="spot-label">What to look for</p>
     <ul class="techniques">${(phase.look || []).map(x => `<li>${x}</li>`).join('')}</ul>
     <p class="spot-label">What to change</p>
@@ -691,6 +743,21 @@ function renderAnalysisCard() {
     if (!setManualWaterTemp(v)) { input.style.borderColor = '#e05252'; input.focus(); }
   });
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') el.querySelector('#wt-set').click(); });
+  el.querySelectorAll('.sonar-thermo').forEach(b => b.addEventListener('click', () => {
+    const cur = loadSonar();
+    setSonar({ thermo: cur && cur.thermo === b.dataset.k ? null : b.dataset.k });
+  }));
+  el.querySelectorAll('.sonar-clutter').forEach(b => b.addEventListener('click', () => {
+    const cur = loadSonar();
+    setSonar({ clutter: cur && cur.clutter === b.dataset.k ? null : b.dataset.k });
+  }));
+  const depthIn = el.querySelector('#thermo-depth');
+  if (depthIn) depthIn.addEventListener('change', () => {
+    const d = parseFloat(depthIn.value);
+    setSonar({ depth: d >= 3 && d <= 80 ? Math.round(d) : null });
+  });
+  const sonarClear = el.querySelector('#sonar-clear');
+  if (sonarClear) sonarClear.addEventListener('click', () => setSonar(null));
   const clear = el.querySelector('#wt-clear');
   if (clear) clear.addEventListener('click', () => setManualWaterTemp(null));
   el.querySelectorAll('.wt-chip').forEach(b => b.addEventListener('click', () => setManualWaterTemp(parseFloat(b.dataset.t))));
@@ -958,7 +1025,14 @@ function scoreSpot(spot, f) {
   // caller supplied a context, so the pure weather tests above stay deterministic.
   const ctx = f.ctx;
   if (ctx) {
-    const { phase, signals, pressure } = ctx;
+    const { phase, signals, pressure, thermoDepth } = ctx;
+
+    // A thermocline you marked: fish generally sit at or above it, so spots whose
+    // whole depth range is below it are unlikely, and ones at/above it fit.
+    if (thermoDepth && spot.depth) {
+      if (spot.depth[0] > thermoDepth + 3) add(-12, `sits below the ${thermoDepth} ft thermocline you marked, where fish are scarce`);
+      else if (spot.depth[0] <= thermoDepth + 2) add(6, spot.depth[1] <= thermoDepth + 3 ? `fishes at or above the ${thermoDepth} ft thermocline` : null);
+    }
 
     if (phase) {
       const kb = (phase.kindBonus || {})[spot.kind];
