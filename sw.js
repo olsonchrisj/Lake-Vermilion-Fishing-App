@@ -1,24 +1,16 @@
-const CACHE = 'lv-fishing-v3';
+const CACHE = 'lv-fishing-v4';
 const TILE_CACHE = 'lv-fishing-tiles-v1';
 const MAX_TILES = 500;
-const LEAFLET = [
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
-];
 const ASSETS = [
   './', 'index.html', 'style.css', 'app.js', 'data.js', 'analysis.js', 'bathymetry.js',
-  'reports.auto.js', 'reports.checked.js', 'manifest.json', 'icons/icon.svg'
+  'reports.auto.js', 'reports.checked.js', 'manifest.json', 'icons/icon.svg',
+  'vendor/leaflet/leaflet.js', 'vendor/leaflet/leaflet.css'
 ];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(caches.open(CACHE).then(async (cache) => {
     await cache.addAll(ASSETS);
-    // Leaflet comes from a CDN (cross-origin); cache it too so the map still loads
-    // offline. Failure here shouldn't block install.
-    await Promise.all(LEAFLET.map(u =>
-      fetch(u, { mode: 'no-cors' }).then(r => cache.put(u, r)).catch(() => {})
-    ));
   }));
 });
 
