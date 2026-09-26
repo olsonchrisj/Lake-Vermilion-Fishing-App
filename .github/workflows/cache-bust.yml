@@ -3,7 +3,7 @@ name: Bump cache-busting versions
 on:
   push:
     branches: [main]
-    paths: ['style.css', 'app.js', 'data.js']
+    paths: ['style.css', 'app.js', 'data.js', 'analysis.js']
 
 permissions:
   contents: write
