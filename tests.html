@@ -45,6 +45,10 @@ document.getElementById('app').addEventListener('load', () => {
   t('phase: 60F in Sept = early-fall', () => eq(w.seasonPhase(D(2026, 9, 12), 60).key, 'early-fall'));
   t('phase: 54F in Oct = turnover', () => eq(w.seasonPhase(D(2026, 10, 5), 54).key, 'turnover'));
   t('phase: 44F in Nov = late-fall', () => eq(w.seasonPhase(D(2026, 11, 8), 44).key, 'late-fall'));
+  t('phase: 56F in Sept still early-fall (not turnover yet)', () => eq(w.seasonPhase(D(2026, 9, 26), 56).key, 'early-fall'));
+  t('phase: 55F flips to turnover range check', () => eq(w.seasonPhase(D(2026, 10, 2), 54.5).key, 'turnover'));
+  t('phase: 46F = late-fall', () => eq(w.seasonPhase(D(2026, 10, 25), 46).key, 'late-fall'));
+  t('every phase has look/adjust/next guidance', () => Object.values(w.eval('PHASES')).every(p => p.look.length >= 2 && p.adjust.length >= 2 && p.next) || 'missing guidance');
   t('phase: 45F in May = spring-spawn (warming, not fall)', () => eq(w.seasonPhase(D(2026, 5, 5), 45).key, 'spring-spawn'));
   t('phase: 55F in May = post-spawn', () => eq(w.seasonPhase(D(2026, 5, 25), 55).key, 'post-spawn'));
   const obs = (arr) => arr.map(([hAgo, pa]) => ({ properties: { timestamp: new Date(Date.UTC(2026, 8, 26, 12) - hAgo * 3600000).toISOString(), barometricPressure: { value: pa } } }));
