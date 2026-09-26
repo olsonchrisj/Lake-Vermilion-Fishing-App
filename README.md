@@ -175,3 +175,10 @@ electronics to confirm the exact crown.
   labels are built lazily on first zoom-in.
 - **Mark Spot** saves personal waypoints on your device (localStorage only).
 - Open `tests.html` in a browser (via a local server) to run the scoring/weather logic tests.
+- **Season-aware analysis** (`analysis.js`, rule-based, no AI): water temperature
+  (from the latest guide report, else the seasonal norm) sets the season phase
+  (early fall, turnover, late fall, spring, summer…) with target depths per
+  species; real barometric pressure trend from the nearest NWS station (Cook,
+  falling back to Ely/Eveleth) drives front detection; the depths and techniques
+  guides mention in their reports are extracted and matched against each spot's
+  `depth` range. Picks now explain themselves with the strongest of these factors.
