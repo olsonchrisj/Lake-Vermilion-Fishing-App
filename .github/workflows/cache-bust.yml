@@ -1,0 +1,28 @@
+name: Bump cache-busting versions
+
+on:
+  push:
+    branches: [main]
+    paths: ['style.css', 'app.js', 'data.js']
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node scripts/bump-version.mjs
+      - name: Commit if changed
+        run: |
+          git config user.name "lv-app-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if ! git diff --quiet -- index.html; then
+            git add index.html
+            git commit -m "Bump cache-busting versions"
+            git push
+          fi
