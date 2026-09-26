@@ -6,7 +6,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 
-const FILES = ['style.css', 'app.js', 'data.js'];
+const FILES = ['style.css', 'app.js', 'data.js', 'analysis.js'];
 const indexUrl = new URL('../index.html', import.meta.url);
 let html = await readFile(indexUrl, 'utf8');
 
