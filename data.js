@@ -77,6 +77,7 @@ const SPOTS = [
     name: "Niles Bay deep mud basin",
     lat: 47.9238, lon: -92.5129,
     kind: "bay",
+    depth: [28, 34], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye"],
     structure: "Deep mud/basin flat",
     why:
@@ -90,6 +91,7 @@ const SPOTS = [
     name: "Oak Narrows",
     lat: 47.9104, lon: -92.4734,
     kind: "current",
+    depth: [8, 16], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye", "smallmouth"],
     structure: "Current-swept narrows, rock/sand transition",
     why:
@@ -103,6 +105,7 @@ const SPOTS = [
     name: "Big Bay rock reefs",
     lat: 47.8474, lon: -92.3624,
     kind: "bay",
+    depth: [12, 18], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye", "smallmouth"],
     structure: "Mid-lake rock reefs, 12–18 ft",
     why:
@@ -116,6 +119,7 @@ const SPOTS = [
     name: "Stuntz Bay weed points",
     lat: 47.8310, lon: -92.2424,
     kind: "bay",
+    depth: [8, 15], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye", "perch", "crappie"],
     structure: "Weed points and inside turns, 8–15 ft; bullrush edges in the shallower pockets",
     why:
@@ -131,6 +135,7 @@ const SPOTS = [
     name: "Black Bay",
     lat: 47.9613, lon: -92.5854,
     kind: "bay",
+    depth: [2, 8], // typical fishing depth range in feet, used for season/report matching
     species: ["muskie", "walleye", "crappie"],
     structure: "Weedy shallow bay, warm shallows, reed/bullrush pockets",
     why:
@@ -146,6 +151,7 @@ const SPOTS = [
     name: "Wakemup Bay",
     lat: 47.9139, lon: -92.6207,
     kind: "bay",
+    depth: [8, 16], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye", "smallmouth"],
     structure: "Rock/sand shoreline break, west-end basin",
     why:
@@ -161,6 +167,7 @@ const SPOTS = [
     name: "Everett Bay",
     lat: 47.8332, lon: -92.3486,
     kind: "bay",
+    depth: [8, 14], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye", "perch", "crappie"],
     structure: "Sheltered bay, public access, weed/sand mix with reed edges",
     why:
@@ -176,6 +183,7 @@ const SPOTS = [
     name: "Muskego Point",
     lat: 47.9027, lon: -92.5510,
     kind: "point",
+    depth: [6, 25], // typical fishing depth range in feet, used for season/report matching
     species: ["muskie", "smallmouth"],
     structure: "Main-lake point, deep water close to shore",
     why:
@@ -190,6 +198,7 @@ const SPOTS = [
     name: "Vermilion Dam Rapids (river outlet)",
     lat: 47.9619, lon: -92.4754,
     kind: "current",
+    depth: [4, 12], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye", "smallmouth"],
     structure: "Current seam at the lake's outlet into the Vermilion River",
     why:
@@ -208,6 +217,7 @@ const SPOTS = [
     name: "Open-water hump, Big Bay–Everett Bay gap",
     lat: 47.8429, lon: -92.3036,
     kind: "hump",
+    depth: [18, 26], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye", "smallmouth"],
     structure: "Isolated hump, ~275 ft across, tops out near 20 ft",
     why:
@@ -222,6 +232,7 @@ const SPOTS = [
     name: "Hump north of Stuntz Bay",
     lat: 47.87186, lon: -92.24131,
     kind: "hump",
+    depth: [12, 21], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye"],
     structure: "Isolated hump, ~265 ft across, tops out near 15 ft",
     why:
@@ -235,6 +246,7 @@ const SPOTS = [
     name: "Open-water hump, north-central basin",
     lat: 47.8927, lon: -92.40345,
     kind: "hump",
+    depth: [18, 26], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye", "smallmouth"],
     structure: "Isolated hump, ~260 ft across, tops out near 20 ft",
     why:
@@ -248,6 +260,7 @@ const SPOTS = [
     name: "Hump near Frazer Bay",
     lat: 47.87014, lon: -92.45143,
     kind: "hump",
+    depth: [12, 21], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye"],
     structure: "Isolated hump, ~255 ft across, tops out near 15 ft",
     why:
@@ -261,6 +274,7 @@ const SPOTS = [
     name: "Hump north of Wakemup Bay",
     lat: 47.93247, lon: -92.6227,
     kind: "hump",
+    depth: [12, 21], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye", "smallmouth"],
     structure: "Isolated hump, ~250 ft across, tops out near 15 ft",
     why:
@@ -274,6 +288,7 @@ const SPOTS = [
     name: "Open-water hump, north of Niles Bay",
     lat: 47.93694, lon: -92.45956,
     kind: "hump",
+    depth: [18, 26], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye"],
     structure: "Isolated hump, ~240 ft across, tops out near 20 ft",
     why:
@@ -287,6 +302,7 @@ const SPOTS = [
     name: "Hump northeast of Stuntz Bay",
     lat: 47.85008, lon: -92.21775,
     kind: "hump",
+    depth: [18, 26], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye", "smallmouth"],
     structure: "Isolated hump, ~230 ft across, tops out near 20 ft",
     why:
@@ -309,6 +325,7 @@ const SPOTS = [
     name: "Pike Bay",
     lat: 47.8105, lon: -92.3207,
     kind: "bay",
+    depth: [1, 5], // typical fishing depth range in feet, used for season/report matching
     species: ["muskie", "perch", "crappie"],
     structure: "Shallow bay, DNR contours show nothing deeper than ~5 ft nearby",
     why:
@@ -323,6 +340,7 @@ const SPOTS = [
     name: "Armstrong Bay",
     lat: 47.8496, lon: -92.1785,
     kind: "bay",
+    depth: [8, 15], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye", "perch"],
     structure: "Shallow-to-moderate bay, DNR contours to ~15 ft nearby",
     why:
@@ -336,6 +354,7 @@ const SPOTS = [
     name: "Norwegian Bay",
     lat: 47.9482, lon: -92.5568,
     kind: "bay",
+    depth: [12, 20], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye", "muskie"],
     structure: "Moderate-depth bay, DNR contours to ~20 ft nearby",
     why:
@@ -349,6 +368,7 @@ const SPOTS = [
     name: "Head of the Lakes Bay",
     lat: 47.9410, lon: -92.6466,
     kind: "bay",
+    depth: [8, 30], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye", "smallmouth"],
     structure: "Shallow flat right next to deep water — DNR contours nearby run out to ~50 ft",
     why:
@@ -363,6 +383,7 @@ const SPOTS = [
     name: "White Eagle Bay",
     lat: 47.9389, lon: -92.6634,
     kind: "bay",
+    depth: [8, 30], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye", "smallmouth"],
     structure: "Shallow flat next to deep water — DNR contours nearby run out to ~50 ft",
     why:
@@ -376,6 +397,7 @@ const SPOTS = [
     name: "Greenwood Bay",
     lat: 47.8799, lon: -92.4029,
     kind: "bay",
+    depth: [8, 15], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye", "perch"],
     structure: "Shallow-to-moderate bay, DNR contours to ~15 ft nearby",
     why:
@@ -389,6 +411,7 @@ const SPOTS = [
     name: "Waconda Bay",
     lat: 47.8955, lon: -92.5296,
     kind: "bay",
+    depth: [10, 20], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye"],
     structure: "Moderate-depth bay, DNR contours to ~20 ft nearby",
     why:
@@ -405,6 +428,7 @@ const SPOTS = [
     name: "Open-water hump, far west end",
     lat: 47.9407, lon: -92.65504,
     kind: "hump",
+    depth: [8, 16], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye", "smallmouth"],
     structure: "Isolated hump, ~285 ft across, tops out near 10 ft",
     why:
@@ -419,6 +443,7 @@ const SPOTS = [
     name: "Open-water hump near Norwegian Bay",
     lat: 47.93099, lon: -92.59152,
     kind: "hump",
+    depth: [12, 21], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye", "smallmouth"],
     structure: "Isolated hump, ~290 ft across, tops out near 15 ft",
     why:
@@ -432,6 +457,7 @@ const SPOTS = [
     name: "Open-water hump, south of Everett Bay",
     lat: 47.84243, lon: -92.28778,
     kind: "hump",
+    depth: [12, 21], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye", "smallmouth"],
     structure: "Isolated hump, ~260 ft across, tops out near 15 ft",
     why:
@@ -445,6 +471,7 @@ const SPOTS = [
     name: "Open-water hump, south of Oak Narrows",
     lat: 47.84538, lon: -92.34447,
     kind: "hump",
+    depth: [18, 26], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye"],
     structure: "Isolated hump, ~205 ft across, tops out near 20 ft",
     why:
@@ -458,6 +485,7 @@ const SPOTS = [
     name: "Open-water hump, central basin near Frazer Bay",
     lat: 47.89249, lon: -92.4529,
     kind: "hump",
+    depth: [12, 21], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye", "smallmouth"],
     structure: "Isolated hump, ~290 ft across, tops out near 15 ft",
     why:
@@ -471,6 +499,7 @@ const SPOTS = [
     name: "Open-water hump, north of Big Bay",
     lat: 47.86909, lon: -92.26208,
     kind: "hump",
+    depth: [12, 21], // typical fishing depth range in feet, used for season/report matching
     species: ["walleye", "smallmouth"],
     structure: "Isolated hump, ~295 ft across, tops out near 15 ft",
     why:
