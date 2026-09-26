@@ -402,6 +402,18 @@ function idealTextColor(hex) {
 
 // The spot writeups are hand-curated for a season; say so once they're getting old
 // instead of presenting them as current.
+function seasonFitHtml(spot) {
+  const adv = seasonAdviceForSpot(spot, analysisContext.phase);
+  if (!adv) return '';
+  const sig = analysisContext.signals;
+  const guide = sig.hotDepth && spot.depth
+    ? `<p>Guides are reporting ${sig.hotDepth[0]}–${sig.hotDepth[1]} ft; this spot fishes ${spot.depth[0]}–${spot.depth[1]} ft (${depthOverlap(spot.depth, sig.hotDepth) > 0 ? 'overlaps' : 'does not overlap'}).</p>`
+    : '';
+  return `<p class="spot-label">Season fit — ${adv.phaseLabel}</p>
+    <p>${adv.blurb}</p>
+    <ul class="techniques">${adv.parts.map(p => `<li>${p}</li>`).join('')}</ul>${guide}`;
+}
+
 function spotNotesAgeHtml() {
   const age = Math.floor(daysOld(LAST_UPDATED));
   if (age <= 30) return '';
@@ -427,13 +439,14 @@ function openSpotPanel(spot) {
     <p class="spot-title">${spot.name}</p>
     <p class="spot-structure">${spot.structure}${myPos ? ` · <b>${distanceLabel(spot)}</b> from you` : ''}</p>
     <div class="species-tags">${tags}</div>
-    <p class="spot-label">Why this spot right now</p>
+    <p class="spot-label">About this spot (hand-written)</p>
     <p>${spot.why}</p>
     <p class="spot-label">Technique</p>
     <p>${spot.technique}</p>
     <p class="spot-label">Best conditions</p>
     <p>${spot.bestConditions}</p>
     ${todayFitHtml}
+    ${seasonFitHtml(spot)}
     ${spotNotesAgeHtml()}
   `;
   spotPanel.classList.remove('hidden');
@@ -562,6 +575,59 @@ document.getElementById('report-block').innerHTML = `
   ${checkedHtml}
 `;
 
+// --- Season / guide-report / pressure analysis (see analysis.js) ---------------
+// Water temperature (from a recent guide report when there is one, otherwise the
+// seasonal norm) decides the season phase; the reports also yield the depths and
+// techniques guides are actually talking about. Barometric pressure is fetched with
+// the weather below and filled in on the same object.
+const analysisNow = new Date();
+const waterTemp = estimateWaterTemp(rawReports, analysisNow);
+const analysisContext = {
+  waterTemp,
+  phase: seasonPhase(analysisNow, waterTemp.tempF),
+  signals: parseReportSignals(rawReports, analysisNow, REPORT_MAX_AGE_DAYS),
+  pressure: null
+};
+
+// Nearest NWS stations with barometer readings, in order: Cook, Ely, Eveleth-Virginia.
+async function loadPressure() {
+  for (const id of ['KCQM', 'KELO', 'KEVM']) {
+    try {
+      const res = await fetch(`https://api.weather.gov/stations/${id}/observations?limit=100`);
+      if (!res.ok) continue;
+      const trend = pressureTrend((await res.json()).features);
+      if (trend) { trend.station = id; return trend; }
+    } catch (e) { /* try the next station */ }
+  }
+  return null;
+}
+
+function renderAnalysisCard() {
+  const { phase, waterTemp: wt, signals, pressure } = analysisContext;
+  let el = document.getElementById('analysis-block');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'analysis-block';
+    el.className = 'report-card';
+    document.getElementById('report-block').prepend(el);
+  }
+  const depthLines = Object.entries(phase.depth).map(([sp, d]) =>
+    `<li><b>${SPECIES_INFO[sp] ? SPECIES_INFO[sp].label : sp}</b>: ${d[0]}–${d[1]} ft</li>`).join('');
+  const presLine = pressure
+    ? `<p>Barometer: <b>${pressure.hpa} hPa</b>, ${pressure.label}${pressure.d6 ? ` (${pressure.d6 > 0 ? '+' : ''}${pressure.d6} over 6 h)` : ''} <span class="muted">— ${pressure.station} station</span></p>`
+    : '';
+  const sigLine = signals.reportCount
+    ? `<p>What the guides are reporting${signals.hotDepth ? `: fish around <b>${signals.hotDepth[0]}–${signals.hotDepth[1]} ft</b>` : ''}${signals.techniques.length ? `; using ${signals.techniques.join(', ')}` : ''}. <span class="muted">(extracted from the reports below, no AI)</span></p>`
+    : '';
+  el.innerHTML = `
+    <h3>Season: ${phase.label}</h3>
+    <p>Water temp ~<b>${wt.tempF}°F</b> <span class="muted">(${wt.source})</span>. ${phase.blurb}</p>
+    <p class="muted" style="margin-top:4px;">Typical depths this phase:</p>
+    <ul class="techniques">${depthLines}</ul>
+    ${presLine}${sigLine}
+    <p class="muted" style="font-size:11.5px;">General northern-MN patterns, recomputed live from the date, water temp, barometer and guide reports. Check current DNR regulations and season dates.</p>`;
+}
+
 // --- Weather angle: pure rule-based reasoning over the live NWS forecast, no AI ---
 // involved. Applies one well-established idea (fish feed harder ahead of a front and
 // go quieter behind one) plus basic wind-push logic (wind from direction X loads bait
@@ -606,6 +672,12 @@ function isFrontLikely({ shiftDeg, precipSoon, windJump }) {
   return (shiftDeg >= 67 && precipSoon) || windJump >= 8;
 }
 
+// A real barometer reading beats inferring a front from wind direction: a fast drop
+// (>= 1.5 hPa in 3 hours) means weather is arriving.
+function pressureSaysFront() {
+  return !!(analysisContext.pressure && analysisContext.pressure.d3 <= -1.5);
+}
+
 function computeTodayFactors(periods) {
   const p0 = periods[0], p1 = periods[1], p2 = periods[2];
   const d0 = dirToDeg(p0.windDirection);
@@ -613,11 +685,19 @@ function computeTodayFactors(periods) {
   const shift = (d0 !== null && d2 !== null) ? angleDiff(d0, d2) : 0;
   const precipSoon = periods.slice(0, 3).some(p => /rain|shower|thunderstorm|snow|drizzle/i.test(p.shortForecast));
   const windJump = p1 ? maxWindMph(p1.windSpeed) - maxWindMph(p0.windSpeed) : 0;
-  const frontLikely = isFrontLikely({ shiftDeg: shift, precipSoon, windJump });
+  const frontLikely = isFrontLikely({ shiftDeg: shift, precipSoon, windJump }) || pressureSaysFront();
   const windMph = maxWindMph(p0.windSpeed);
   const lowLight = /cloud|overcast|rain|shower|storm|fog|drizzle/i.test(p0.shortForecast) && !/sunny|clear/i.test(p0.shortForecast);
   const brightCalm = /sunny|clear/i.test(p0.shortForecast) && windMph < 8;
-  return { p0, p1, p2, windMph, frontLikely, precipSoon, lowLight, brightCalm, bucket: currentBucketKey() };
+  return { p0, p1, p2, windMph, frontLikely, precipSoon, lowLight, brightCalm, bucket: currentBucketKey(), ctx: analysisContext };
+}
+
+function pressureSentence() {
+  const p = analysisContext.pressure;
+  if (!p) return '';
+  if (p.label === 'falling') return ` The barometer is falling (${p.d3} hPa in 3 hours, now ${p.hpa}) — a real sign weather is on the way.`;
+  if (p.label === 'rising') return ` The barometer is rising (${p.d3 > 0 ? '+' : ''}${p.d3} hPa in 3 hours, now ${p.hpa}) — behind a front, expect fish to hold tighter.`;
+  return ` The barometer is steady at ${p.hpa} hPa${p.high ? ' (high pressure — stable, often bright)' : ''}.`;
 }
 
 function computeWeatherAngle(f) {
@@ -628,12 +708,12 @@ function computeWeatherAngle(f) {
       `toward ${towardDir}${precipSoon ? ', with rain or storms in the forecast' : ''}. Fish typically feed hardest ` +
       `in the hours right before a front arrives, so that pre-frontal window is usually the better bite — work ` +
       `wind-blown points and reef edges hard while it lasts. Expect a slower, tighter-to-structure bite for a day ` +
-      `or so once it passes.`;
+      `or so once it passes.` + pressureSentence();
   }
   const opp = oppositeDir(p0.windDirection);
   return `No major frontal passage in the next few days — ${p0.windDirection} wind around ${p0.windSpeed}.` +
     (opp ? ` That wind is loading bait onto ${opp}-facing shorelines and points — worth starting there.` : '') +
-    ` With stable weather, normal timing (early/late, low light) matters more than chasing a front right now.`;
+    ` With stable weather, normal timing (early/late, low light) matters more than chasing a front right now.` + pressureSentence();
 }
 
 // --- Time-of-day buckets: same rule-based scoring as above, but computed from the
@@ -698,7 +778,7 @@ function buildHourlyBuckets(hourly) {
   const next24 = next48.slice(0, 24);
   const precipSoon = next24.some(h => /rain|shower|thunderstorm|snow|drizzle/i.test(h.shortForecast));
   const windJump = Math.max(...next24.map(h => maxWindMph(h.windSpeed))) - maxWindMph(next48[0].windSpeed);
-  const frontLikelyGlobal = isFrontLikely({ shiftDeg: shiftDate ? 90 : 0, precipSoon, windJump });
+  const frontLikelyGlobal = isFrontLikely({ shiftDeg: shiftDate ? 90 : 0, precipSoon, windJump }) || pressureSaysFront();
 
   const result = {};
   Object.keys(BUCKET_LABELS).forEach(bucket => {
@@ -715,7 +795,7 @@ function buildHourlyBuckets(hourly) {
     const dayLabel = bucketGroupDate(bucketStart) === bucketGroupDate(now) ? 'Today' : 'Tomorrow';
     const timeFmt = (d) => d.toLocaleTimeString('en-US', { hour: 'numeric' });
     result[bucket] = {
-      bucket, windMph, precipSoon, lowLight, brightCalm,
+      bucket, windMph, precipSoon, lowLight, brightCalm, ctx: analysisContext,
       frontLikely: frontLikelyGlobal && (!shiftDate || bucketStart < shiftDate),
       rangeLabel: `${dayLabel}, ${timeFmt(bucketStart)}–${timeFmt(bucketEnd)}`
     };
@@ -763,37 +843,36 @@ function speciesFit(species, f) {
 
 function scoreSpot(spot, f) {
   let score = 50;
-  let reason = null;
+  const notes = []; // { pts, text } — the biggest positive ones become the "why"
+  const add = (pts, text) => { score += pts; if (text) notes.push({ pts, text }); };
   const isBay = spot.kind === 'bay';
   const isPoint = spot.kind === 'point';
   const isCurrent = spot.kind === 'current';
   const isHump = spot.kind === 'hump';
-  const setReason = (r) => { if (!reason) reason = r; };
 
   if (f.frontLikely && (isPoint || isCurrent || isHump)) {
-    score += 20;
-    setReason("pre-frontal window — active fish should be using this structure hard right now");
+    add(20, "pre-frontal window — active fish should be using this structure hard right now");
   }
 
   if (f.windMph >= 8 && f.windMph <= 20) {
-    if (isPoint || isCurrent) { score += 18; setReason('wind-blown today — bait is loading up against this structure'); }
-    else if (isHump) { score += 8; setReason('light-to-moderate chop over the top, better than dead calm here'); }
+    if (isPoint || isCurrent) add(18, 'wind-blown today — bait is loading up against this structure');
+    else if (isHump) add(8, 'light-to-moderate chop over the top, better than dead calm here');
   } else if (f.windMph > 20) {
-    if (isBay) { score += 15; setReason('sheltered water while the main lake is rough today'); }
-    else if (isPoint || isHump) { score -= 10; setReason('exposed to today\'s wind — tough boat control, lower priority today'); }
+    if (isBay) add(15, 'sheltered water while the main lake is rough today');
+    else if (isPoint || isHump) add(-10, "exposed to today's wind — tough boat control, lower priority today");
   } else if (f.windMph < 5) {
-    if (isHump) { score -= 8; setReason('dead calm today, which tends to shut down open-water structure'); }
-    else if (isBay) { score += 5; }
+    if (isHump) add(-8, 'dead calm today, which tends to shut down open-water structure');
+    else if (isBay) add(5);
   }
 
   if (f.lowLight) {
-    if (isBay) { score += 12; setReason("today's overcast keeps fish shallow and active here"); }
-    else if (isHump) { score += 6; }
-    if (spot.species.includes('muskie')) { score += 5; }
+    if (isBay) add(12, "today's overcast keeps fish shallow and active here");
+    else if (isHump) add(6);
+    if (spot.species.includes('muskie')) add(5);
   } else if (f.brightCalm) {
-    if (isHump) { score += 12; setReason("bright, calm skies today push fish to deeper structure like this"); }
-    else if (isBay) { score -= 6; }
-    if (spot.species.includes('muskie')) { score += 4; setReason('good bright-light window for muskie sight-feeding'); }
+    if (isHump) add(12, 'bright, calm skies today push fish to deeper structure like this');
+    else if (isBay) add(-6);
+    if (spot.species.includes('muskie')) add(4, 'good bright-light window for muskie sight-feeding');
   }
 
   // Species fit: each species has a time of day it feeds best and a light/front
@@ -805,12 +884,56 @@ function scoreSpot(spot, f) {
     const fit = speciesFit(sp, f);
     if (fit.delta > bestSpecies) { bestSpecies = fit.delta; bestSpeciesReason = fit.reason; }
   }
-  if (isFinite(bestSpecies)) {
-    score += bestSpecies;
-    if (bestSpecies >= 8 && bestSpeciesReason) reason = reason ? `${reason}; ${bestSpeciesReason}` : bestSpeciesReason;
+  if (isFinite(bestSpecies)) add(bestSpecies, bestSpecies >= 8 ? bestSpeciesReason : null);
+
+  // Season / pressure / guide-report analysis (analysis.js). Only applied when the
+  // caller supplied a context, so the pure weather tests above stay deterministic.
+  const ctx = f.ctx;
+  if (ctx) {
+    const { phase, signals, pressure } = ctx;
+
+    if (phase) {
+      const kb = (phase.kindBonus || {})[spot.kind];
+      if (kb) add(kb, kb >= 4 ? `${phase.label.toLowerCase()}: ${spot.kind === 'hump' ? 'humps' : spot.kind === 'current' ? 'current seams' : spot.kind === 'point' ? 'points' : 'bays'} fish well now` : null);
+      if (spot.depth) {
+        let bestOv = 0, bestSp = null;
+        for (const sp of spot.species) {
+          const ov = depthOverlap(spot.depth, phase.depth[sp]);
+          if (ov !== null && ov > bestOv) { bestOv = ov; bestSp = sp; }
+        }
+        if (bestSp && bestOv > 0) {
+          const t = phase.depth[bestSp];
+          add(Math.round(14 * bestOv), bestOv >= 0.6 ? `right depth for ${bestSp} in the ${phase.label.toLowerCase().replace(/ \(.*\)/, '')} pattern (${t[0]}–${t[1]} ft)` : null);
+        } else if (bestSp === null && spot.species.some(sp => phase.depth[sp])) {
+          add(-5, `depth is off the usual ${phase.label.toLowerCase().replace(/ \(.*\)/, '')} pattern`);
+        }
+      }
+    }
+
+    if (signals && signals.hotDepth && spot.depth) {
+      const ov = depthOverlap(spot.depth, signals.hotDepth);
+      if (ov > 0) add(Math.round(10 * ov), ov >= 0.6 ? `matches the ${signals.hotDepth[0]}–${signals.hotDepth[1]} ft the guides are reporting` : null);
+    }
+
+    if (pressure) {
+      if (pressure.label === 'falling' && (isPoint || isCurrent || isHump)) {
+        add(10, `barometer falling (${pressure.d3} hPa/3h) — fish feed ahead of the weather`);
+      } else if (pressure.label === 'rising') {
+        // Post-front: fish tuck in and hold tighter; sheltered/slow water beats open structure.
+        if (isBay) add(6, 'barometer rising behind a front — fish are holding tight, sheltered water is easier');
+        else if (isHump || isPoint) add(-6);
+      } else if (pressure.label === 'steady' && pressure.high && f.brightCalm) {
+        if (isHump) add(4);
+      }
+    }
   }
 
-  return { score, reason: reason || 'solid all-around structure regardless of today\'s specific conditions' };
+  const positives = notes.filter(n => n.pts > 0 && n.text).sort((a, b) => b.pts - a.pts).slice(0, 2).map(n => n.text);
+  const negative = notes.filter(n => n.pts < 0 && n.text).sort((a, b) => a.pts - b.pts)[0];
+  const reason = positives.length ? positives.join('; ')
+    : negative ? negative.text
+    : "solid all-around structure regardless of today's specific conditions";
+  return { score, reason, notes };
 }
 
 // Renders the ranked picks list. Pass a buckets object (from buildHourlyBuckets) plus
@@ -883,12 +1006,15 @@ function renderTodaysPicks(input, selectedKey) {
 async function loadWeather() {
   const { gridId, gridX, gridY } = LAKE.weatherPoint;
   const block = document.getElementById('weather-block');
+  renderAnalysisCard();
+  const pressureP = loadPressure().then(p => { analysisContext.pressure = p; renderAnalysisCard(); return p; });
   try {
     const res = await fetch(`https://api.weather.gov/gridpoints/${gridId}/${gridX},${gridY}/forecast`);
     if (!res.ok) throw new Error('forecast fetch failed');
     const json = await res.json();
     const periods = json.properties.periods.slice(0, 6);
     const now = periods[0];
+    await pressureP; // the barometer feeds the front detection below
     const factors = computeTodayFactors(periods);
     block.innerHTML = `
       <div class="wx-now">
