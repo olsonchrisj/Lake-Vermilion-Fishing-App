@@ -65,7 +65,9 @@ self.addEventListener('fetch', (event) => {
   // App shell: network first so updates show up as soon as you're online, falling
   // back to the cached copy when offline. Only successful responses get cached.
   event.respondWith(
-    fetch(req)
+    // no-cache = revalidate with the server on every load, so unversioned files
+    // (reports, weekly analysis) can't sit in the browser's HTTP cache for 10 minutes.
+    fetch(req, req.mode === 'navigate' ? undefined : { cache: 'no-cache' })
       .then(res => {
         if (res && (res.ok || res.type === 'opaque')) {
           const copy = res.clone();
