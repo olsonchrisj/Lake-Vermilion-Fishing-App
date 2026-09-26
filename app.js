@@ -581,13 +581,57 @@ document.getElementById('report-block').innerHTML = `
 // techniques guides are actually talking about. Barometric pressure is fetched with
 // the weather below and filled in on the same object.
 const analysisNow = new Date();
-const waterTemp = estimateWaterTemp(rawReports, analysisNow);
+
+// A water temperature you enter yourself (e.g. from your sonar out on the lake)
+// beats any estimate. It's kept on this device only and expires after a few days,
+// since the lake keeps cooling.
+const WT_KEY = 'lv-watertemp-v1';
+const WT_MAX_AGE_DAYS = 5;
+function loadManualTemp() {
+  try {
+    const v = JSON.parse(localStorage.getItem(WT_KEY));
+    if (v && typeof v.tempF === 'number' && Date.now() - v.t < WT_MAX_AGE_DAYS * 86400000) return v;
+  } catch (e) { /* storage unavailable */ }
+  return null;
+}
+function saveManualTemp(v) {
+  try { if (v) localStorage.setItem(WT_KEY, JSON.stringify(v)); else localStorage.removeItem(WT_KEY); } catch (e) { /* ignore */ }
+}
+function agoLabel(ms) {
+  const m = Math.round((Date.now() - ms) / 60000);
+  if (m < 2) return 'just now';
+  if (m < 90) return `${m} min ago`;
+  const h = Math.round(m / 60);
+  return h < 36 ? `${h} h ago` : `${Math.round(h / 24)} days ago`;
+}
 const analysisContext = {
-  waterTemp,
-  phase: seasonPhase(analysisNow, waterTemp.tempF),
+  waterTemp: null,
+  phase: null,
   signals: parseReportSignals(rawReports, analysisNow, REPORT_MAX_AGE_DAYS),
   pressure: null
 };
+// Recomputes water temp and season phase in place (scoreSpot holds a reference to
+// this object, so the picks update as soon as it's re-rendered).
+function refreshAnalysis() {
+  const manual = loadManualTemp();
+  analysisContext.waterTemp = manual
+    ? { tempF: manual.tempF, source: `your reading, ${agoLabel(manual.t)}`, manual: true }
+    : estimateWaterTemp(rawReports, new Date());
+  analysisContext.phase = seasonPhase(new Date(), analysisContext.waterTemp.tempF);
+}
+refreshAnalysis();
+function setManualWaterTemp(tempF) {
+  if (tempF === null) saveManualTemp(null);
+  else {
+    if (!(tempF >= 32 && tempF <= 85)) return false;
+    saveManualTemp({ tempF: Math.round(tempF * 2) / 2, t: Date.now() });
+  }
+  refreshAnalysis();
+  renderAnalysisCard();
+  if (window.__todayFactorsByBucket) renderTodaysPicks(window.__todayFactorsByBucket, window.__selectedBucketKey);
+  else if (window.__todayFactors) renderTodaysPicks(window.__todayFactors);
+  return true;
+}
 
 // Nearest NWS stations with barometer readings, in order: Cook, Ely, Eveleth-Virginia.
 async function loadPressure() {
@@ -622,10 +666,34 @@ function renderAnalysisCard() {
   el.innerHTML = `
     <h3>Season: ${phase.label}</h3>
     <p>Water temp ~<b>${wt.tempF}°F</b> <span class="muted">(${wt.source})</span>. ${phase.blurb}</p>
-    <p class="muted" style="margin-top:4px;">Typical depths this phase:</p>
+    <div class="wt-controls" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0;">
+      <input id="wt-input" type="number" inputmode="decimal" min="32" max="85" step="0.5" placeholder="°F"
+        style="width:70px;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:rgba(255,255,255,0.06);color:var(--text);font-size:14px;" />
+      <button class="time-pill" id="wt-set">Set from sonar</button>
+      ${wt.manual ? '<button class="time-pill" id="wt-clear">Use estimate</button>' : ''}
+    </div>
+    <div class="time-toggle" style="margin-top:0;">
+      ${[68, 62, 57, 53, 48, 42].map(t => `<button class="time-pill wt-chip" data-t="${t}">${t}°</button>`).join('')}
+    </div>
+    <p class="muted" style="font-size:11.5px;margin-top:4px;">Type the surface temp from your sonar once you're on the water, or tap a temperature to see how the advice changes. It's saved on this device for ${WT_MAX_AGE_DAYS} days.</p>
+    <p class="spot-label">What to look for</p>
+    <ul class="techniques">${(phase.look || []).map(x => `<li>${x}</li>`).join('')}</ul>
+    <p class="spot-label">What to change</p>
+    <ul class="techniques">${(phase.adjust || []).map(x => `<li>${x}</li>`).join('')}</ul>
+    ${phase.next ? `<p class="muted" style="margin-top:6px;">Next: ${phase.next}</p>` : ''}
+    <p class="muted" style="margin-top:8px;">Typical depths this phase:</p>
     <ul class="techniques">${depthLines}</ul>
     ${presLine}${sigLine}
     <p class="muted" style="font-size:11.5px;">General northern-MN patterns, recomputed live from the date, water temp, barometer and guide reports. Check current DNR regulations and season dates.</p>`;
+  const input = el.querySelector('#wt-input');
+  el.querySelector('#wt-set').addEventListener('click', () => {
+    const v = parseFloat(input.value);
+    if (!setManualWaterTemp(v)) { input.style.borderColor = '#e05252'; input.focus(); }
+  });
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') el.querySelector('#wt-set').click(); });
+  const clear = el.querySelector('#wt-clear');
+  if (clear) clear.addEventListener('click', () => setManualWaterTemp(null));
+  el.querySelectorAll('.wt-chip').forEach(b => b.addEventListener('click', () => setManualWaterTemp(parseFloat(b.dataset.t))));
 }
 
 // --- Weather angle: pure rule-based reasoning over the live NWS forecast, no AI ---
