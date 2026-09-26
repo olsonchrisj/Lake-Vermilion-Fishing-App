@@ -342,26 +342,64 @@ function primaryColor(spot) {
   return SPECIES_INFO[spot.species[0]].color;
 }
 
-function makeIcon(color, kind) {
+function makeIcon(color, kind, rank) {
+  // rank 1-5 = one of the current top picks: gold ring + numbered badge.
+  const shadow = rank
+    ? 'box-shadow:0 0 0 3px rgba(255,214,0,0.95),0 0 12px 4px rgba(255,214,0,0.7);'
+    : 'box-shadow:0 1px 4px rgba(0,0,0,0.5);';
+  const badge = rank
+    ? `<div style="position:absolute;top:-10px;right:-10px;min-width:16px;height:16px;padding:0 2px;box-sizing:border-box;border-radius:8px;background:#ffd600;color:#12141c;font:700 11px/14px system-ui,sans-serif;text-align:center;border:1px solid #12141c;">${rank}</div>`
+    : '';
   if (kind === 'hump') {
     // Sunken structure gets a plain circle marker (not a "place" pin) — there's no
     // shoreline location to point at, just a spot on open water.
     return L.divIcon({
       className: '',
-      html: `<div style="width:16px;height:16px;border-radius:50%;background:${color};
-             border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>`,
+      html: `<div style="position:relative;width:16px;height:16px;"><div style="width:16px;height:16px;border-radius:50%;background:${color};
+             border:2px solid #fff;box-sizing:content-box;margin:-2px 0 0 -2px;${shadow}"></div>${badge}</div>`,
       iconSize: [16, 16],
       iconAnchor: [8, 8]
     });
   }
   return L.divIcon({
     className: '',
-    html: `<div style="width:22px;height:22px;border-radius:50% 50% 50% 0;background:${color};
-           transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>`,
+    html: `<div style="position:relative;width:22px;height:22px;"><div style="width:22px;height:22px;border-radius:50% 50% 50% 0;background:${color};
+           transform:rotate(-45deg);border:2px solid #fff;box-sizing:content-box;margin:-2px 0 0 -2px;${shadow}"></div>${badge}</div>`,
     iconSize: [22, 22],
     iconAnchor: [11, 22]
   });
 }
+
+// --- Live ranking on the map: numbered gold pins for the top 5 picks right now, and
+// the poorest-fitting 40% of spots faded. Recomputed whenever the picks re-render
+// (time-of-day tab, water temp, sonar read, weather load). Toggleable.
+let highlightOn = true;
+let lastScored = null;
+function applyMarkerRanking() {
+  if (!lastScored) return;
+  const n = lastScored.length;
+  const dimFrom = Math.ceil(n * 0.6);
+  lastScored.forEach(({ spot }, idx) => {
+    const m = markersById[spot.id];
+    if (!m) return;
+    const rank = highlightOn && idx < 5 ? idx + 1 : 0;
+    const dim = highlightOn && idx >= dimFrom;
+    m.setIcon(makeIcon(primaryColor(spot), spot.kind, rank));
+    m.setOpacity(dim ? 0.4 : 1);
+    m.setZIndexOffset(rank ? 1000 - rank : 0);
+  });
+}
+(() => {
+  const btn = document.createElement('button');
+  btn.className = 'pill-btn active';
+  btn.textContent = 'Highlight picks';
+  btn.addEventListener('click', () => {
+    highlightOn = !highlightOn;
+    btn.classList.toggle('active', highlightOn);
+    applyMarkerRanking();
+  });
+  document.getElementById('layer-controls').appendChild(btn);
+})();
 
 SPOTS.forEach(spot => {
   const marker = L.marker([spot.lat, spot.lon], { icon: makeIcon(primaryColor(spot), spot.kind) });
@@ -420,8 +458,18 @@ function spotNotesAgeHtml() {
   return `<p class="stale-flag">These spot notes were last reviewed ${age} days ago — patterns shift with the season (fall turnover especially), so check against the current report.</p>`;
 }
 
+let currentSpot = null;
 function openSpotPanel(spot) {
   closeAllSheets();
+  currentSpot = spot;
+  renderSpotDetail(spot);
+  spotPanel.classList.remove('hidden');
+  map.setView([spot.lat, spot.lon], Math.max(map.getZoom(), 13));
+}
+
+// Builds the spot panel contents. Split out so an already-open panel can refresh
+// itself when the conditions inputs change, without moving the map.
+function renderSpotDetail(spot) {
   const tags = spot.species.map(s => {
     const info = SPECIES_INFO[s];
     return `<span class="species-tag" style="background:${info.color};color:${idealTextColor(info.color)}">${info.label}</span>`;
@@ -449,8 +497,6 @@ function openSpotPanel(spot) {
     ${seasonFitHtml(spot)}
     ${spotNotesAgeHtml()}
   `;
-  spotPanel.classList.remove('hidden');
-  map.setView([spot.lat, spot.lon], Math.max(map.getZoom(), 13));
 }
 
 map.on('click', closeAllSheets);
@@ -1091,6 +1137,8 @@ function renderTodaysPicks(input, selectedKey) {
   const scored = SPOTS.map(spot => ({ spot, ...scoreSpot(spot, factors) }));
   scored.sort((a, b) => b.score - a.score);
   const top = scored.slice(0, 5);
+  lastScored = scored;
+  applyMarkerRanking();
 
   const toggleHtml = isBuckets ? `
     <div class="time-toggle">
@@ -1107,6 +1155,7 @@ function renderTodaysPicks(input, selectedKey) {
       ? 'Ranked live from the hourly NWS forecast for each window — pick a time of day to see the recommendation shift.'
       : "Ranked live from today's wind and light — same rule-based logic as the weather angle above, no AI, recomputed every time you open the app."}</p>
     ${toggleHtml}
+    <p class="muted" style="font-size:11.5px;margin-top:6px;">On the map: numbered gold pins are these picks; faded pins are the poorest fit right now.</p>
     <div class="picks-list">
       ${top.map(({ spot, reason }) => `
         <button class="pick-item" data-spot-id="${spot.id}">
@@ -1142,6 +1191,9 @@ function renderTodaysPicks(input, selectedKey) {
       if (spot) openSpotPanel(spot);
     });
   });
+
+  // An already-open spot panel picks up the new conditions too.
+  if (currentSpot && !spotPanel.classList.contains('hidden')) renderSpotDetail(currentSpot);
 }
 
 // --- Live weather from National Weather Service (api.weather.gov), no key required ---
