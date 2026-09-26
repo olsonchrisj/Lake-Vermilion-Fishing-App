@@ -1,0 +1,50 @@
+name: Weekly Claude analysis
+
+on:
+  schedule:
+    # Sundays 11:00 UTC (5-6am Central), ahead of the week's fishing.
+    - cron: '0 11 * * 0'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Assemble the prompt only: no API call, nothing committed'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: weekly-analysis
+  cancel-in-progress: false
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install the Anthropic SDK
+        run: npm install --no-save --no-package-lock @anthropic-ai/sdk
+
+      - name: Generate the weekly analysis
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: node scripts/weekly-analysis.mjs ${{ inputs.dry_run && '--dry-run' || '' }}
+
+      - name: Commit if changed
+        if: ${{ !inputs.dry_run }}
+        run: |
+          git config user.name "lv-app-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add analysis.weekly.js
+          if git diff --cached --quiet; then
+            echo "No change to commit"
+          else
+            git commit -m "Weekly Claude analysis"
+            git push
+          fi
