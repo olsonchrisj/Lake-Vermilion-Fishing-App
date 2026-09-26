@@ -6,7 +6,7 @@ const LEAFLET = [
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
 ];
 const ASSETS = [
-  './', 'index.html', 'style.css', 'app.js', 'data.js', 'bathymetry.js',
+  './', 'index.html', 'style.css', 'app.js', 'data.js', 'analysis.js', 'bathymetry.js',
   'reports.auto.js', 'reports.checked.js', 'manifest.json', 'icons/icon.svg'
 ];
 
