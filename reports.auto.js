@@ -4,17 +4,17 @@
 // scraped directly from each guide's own site — no AI summarizing involved.
 const AUTO_REPORTS = [
   {
+    "date": "2026-09-23",
+    "source": "Patriot Guide Service (Justin Chromy)",
+    "sourceUrl": "https://www.patriotguideserviceoflakevermilion.com/09-23-26-lake-vermilion-fishing-report/",
+    "waterTempF": null,
+    "rawText": "Another fun week on Vermilion – good fishing and the fall colors are starting to pop! EAST END WALLEYES: The best bite continues to be in transition areas along the bottoms of rocks in 12 to 25 feet. This area is usually sand, but it can sometimes be mud. The best way to attack these fish is with a Lindy Rig and live bait. All three methods (crawlers, leeches, and minnows) are working now. Jigs will work in some instances as well, but we are seeing fish more spread out around the structures. There are fish in several other areas as well. As shallow as a couple feet of water and 30’+. Keep moving until fish are located and be prepared to fish multiple ways to have a good day on the water. WEST END WALLEYES: The bite on the west side is pretty similar to the east end with several different patterns taking place. Some fish are in the sand in 10 to 20 feet, some are on the deep edges of rocks in 12 to 30 feet, there are some Leadcore fish being caught in 20-30 feet, and some fish showing up around the deep holes as well in 30 feet of water. There is a time and place for every technique you can bust out, but the bite is good multiple different ways! We are approaching the peak of fall fishing! The fall walleye bite is only getting better. Justin has limited availability October 6-10, so don’t miss your chance to experience Lake Vermilion at its best. Call 218-820-0355 or reserve your fall fishing trip online."
+  },
+  {
     "date": "2026-08-31",
     "source": "Fishing with Z (Zach Hrvol)",
     "sourceUrl": "https://fishingwithz.com/week-16-august-24-31-2026/",
     "waterTempF": "69–72",
     "rawText": "Week #16: 8/24-8/31, 2026 Water temps: 69-72 Another inconsistent week of fishing but we managed to put quality fish in the boat! We didn’t catch…"
-  },
-  {
-    "date": "2026-09-23",
-    "source": "Patriot Guide Service (Justin Chromy)",
-    "sourceUrl": "https://www.patriotguideserviceoflakevermilion.com/09-23-26-lake-vermilion-fishing-report/",
-    "waterTempF": null,
-    "rawText": "Another fun week on Vermilion &#8211; good fishing and the fall colors are starting to pop! EAST END WALLEYES: The best bite continues to be in transition areas along the bottoms of rocks in 12 to 25 feet. This area is usually sand, but it can sometimes be mud. The best way to attack these fish is with a Lindy Rig and live bait. All three methods (crawlers, leeches, and minnows) are working now. Jigs will work in some instances as well, but we are seeing fish more spread out around the structures. There are fish in several other areas as well. As shallow as a couple feet of water and 30’+. Keep moving until fish are located and be prepared to fish multiple ways to have a good day on the water. WEST END WALLEYES: The bite on the west side is pretty similar to the east end with several different patterns taking place. Some fish are in the sand in 10 to 20 feet, some are on the deep edges of rocks in 12 to 30 feet, there are some Leadcore fish being caught in 20-30 feet, and some fish showing up around the deep holes as well in 30 feet of water. There is a time and place for every technique you can bust out, but the bite is good multiple different ways! We are approaching the peak of fall fishing! The fall walleye bite is only getting better. Justin has limited availability October 6-10, so don&#8217;t miss your chance to experience Lake Vermilion at its best. Call 218-820-0355 or reserve your fall fishing trip online."
   }
 ];
