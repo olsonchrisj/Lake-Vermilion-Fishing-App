@@ -1,175 +1,175 @@
-// Written by Claude (an AI model) in a scheduled daily refresh, from the app's season model,
-// the latest guide report, the NWS forecast and the barometer trend. Overwritten each refresh.
-// app.js labels it as AI-written and ignores it after 10 days.
+// Written by Claude (an AI model) in a Claude Code session, from the app's season model,
+// the latest guide report, the NWS forecast and the barometer trend. Overwritten each time
+// the outlook is refreshed. app.js labels it as AI-written and ignores it after 10 days.
 const WEEKLY_ANALYSIS = {
-  "generatedAt": "2026-09-26T16:14:36Z",
-  "model": "claude (scheduled daily refresh)",
+  "generatedAt": "2026-09-30T12:35:51Z",
+  "model": "claude-sonnet-5 (written by Claude in a Claude Code session)",
   "seasonPhase": "Early fall (cooling, pre-turnover)",
-  "waterTempEstimateF": 58,
+  "waterTempEstimateF": 56,
   "waterTempSource": "seasonal average",
-  "headline": "Stable pre-turnover bite; fish Sunday and Monday before Tuesday storms",
-  "season_read": "Patriot Guide Service (Sept 23) reports good fishing with walleye on transitions at the bottoms of rocks in 12 to 25 feet, plus fish from a couple of feet to 30+, and says the fall bite is still improving. No guide has posted a water temperature since late August (69 to 72F), so the 58F used here is the app's seasonal-average estimate, which puts the lake in early fall, pre-turnover.",
+  "headline": "Post-front reset: fish tight to structure today, then cold, clear and calmer",
+  "season_read": "A day of all-day rain just passed through: the barometer bottomed near 1005 hPa overnight and is now slowly rising. No guide report has posted since Sept 23 (walleye on 12-25 ft transitions, fall bite building), so this read leans on the weather pattern rather than fresh catch reports. Expect a typical post-front adjustment period before the bite settles back in.",
   "patterns": [
     {
-      "title": "Rock-to-sand transitions, 12 to 25 ft",
-      "detail": "The main reported pattern: walleye along the bottoms of rocks where they meet sand or mud. East end 12 to 25 ft, west end sand at 10 to 20 ft and rock edges at 12 to 30 ft. Lindy rig with crawler, leech or minnow."
+      "title": "Post-front, tight to structure (inference)",
+      "detail": "Rising pressure behind a big rain system usually pushes fish tight to defined structure - humps, breaks, current seams - rather than roaming open flats or suspending. Slow down and fish vertically over the best spots instead of covering water."
     },
     {
-      "title": "Keep moving, fish several ways",
-      "detail": "Guides say fish are spread out, from a couple of feet to over 30. Lead-core in 20 to 30 ft and the deep holes near 30 ft are also producing on the west end. Give a spot 20 minutes, then move."
+      "title": "Current stays productive",
+      "detail": "Oak Narrows and the dam outlet concentrate baitfish in current, which tends to keep producing even when the rest of the lake goes quiet after a front. Good first stops today."
     },
     {
-      "title": "Shallower at dusk (inference)",
-      "detail": "With Sunday and Monday calm and a cool Sunday night near 44F, expect walleye to slide up rock edges and hump tops at last light. Slip bobber with a leech in 8 to 15 ft. General fall pattern, not reported this week."
+      "title": "Clearing and colder behind the rain",
+      "detail": "Skies clear through the week with lows dropping into the 30s by Thursday and Friday night, including frost. Cooling water should keep pushing the pre-turnover pattern along faster than a calm week would."
     },
     {
-      "title": "Muskie ahead of the Monday night front (inference)",
-      "detail": "Monday afternoon into evening, before showers and storms arrive, is a classic feeding window. Cast wind-facing points and the deep side of fading weed edges."
+      "title": "Watch Saturday's next system",
+      "detail": "Rain returns Saturday into Saturday night with south then west wind. That is another front-timing window worth fishing ahead of, then expect another short adjustment period after."
     }
   ],
-  "turnover_watch": "Not yet. The seasonal estimate is about 58F and no measurement has been reported. Lows of 44F Sunday night and 38 to 39F Thursday and Friday nights will speed cooling, so turnover could start in one to two weeks (inference). Watch for a fading thermocline on sonar, cloudy water, foam on windy shores, and fish suddenly scattered or suspended. Log a water temperature in the app.",
-  "weather_outlook": "Today SE wind 10 to 15 mph, gusts to 25, highs near 66, showers likely tonight. Sunday and Monday: light wind, upper 60s, Sunday night low 44. Showers and storms Monday night into Tuesday, then cooler with west then north wind; highs low 60s and lows near 38 Thursday and Friday. Barometer steady but easing: about 1021 hPa, down 0.7 in 3 h and 1.1 in 6 h.",
-  "best_windows": "Today, fish wind-blown rock on the northwest (downwind) shores before tonight's showers. Sunday after the early showers clear and all of Monday are calm and stable; hit the transitions midday and move shallower at dusk. Monday late afternoon to dark, ahead of the storms, is the best window of the next 48 h. Expect a slower bite Tuesday.",
+  "turnover_watch": "Not confirmed. Estimated surface temp is around 56F and falling with several nights near or below freezing coming. If you are seeing bait and marks scatter, or the same temperature top to bottom on sonar, that is a turnover sign - tell the app your reading. Otherwise this still reads as early fall, not turnover, for now.",
+  "weather_outlook": "Today clears out (patchy fog, then mostly sunny, high 70) behind last night's rain. Turning cold and clear Wed night through Friday, lows in the 30s with frost both nights. Rain returns Saturday into Saturday night, then patchy frost again Sunday. Barometer bottomed overnight near 1005 hPa and is slowly rising now.",
+  "best_windows": "Today and tomorrow, expect a short, tighter bite while the lake resets from the front - fish structure hard, don't expect a wide-open bite. Wednesday and Thursday, clearing skies with a rising, steadying barometer should bring the best fishing of the week, especially dusk. Friday to Sunday, treat any hour before the Saturday rain as a pre-front window.",
   "top_spots": [
     {
-      "id": "big-bay-reefs",
-      "why": "Rock reefs at 12 to 18 ft sit right in the reported transition zone and suit a Lindy rig in calm Sunday and Monday conditions."
-    },
-    {
       "id": "oak-narrows",
-      "why": "Sand-to-rock transition with current, the best place to catch today's SE wind and a strong dusk option."
+      "why": "Current seam that stays productive when the lake goes quiet after a front; fishes the reported 12-25 ft transition depths at its shallow end."
     },
     {
       "id": "hump-everett-open",
-      "why": "A 20 ft top breaking deeper matches the deep rock edges guides report at 12 to 30 ft."
-    },
-    {
-      "id": "head-of-lakes-bay",
-      "why": "Flat beside deep water lets you test 8 to 30 ft in one stop, fitting the guides' advice to keep moving."
+      "why": "A defined structure top (20 ft) is exactly where post-front fish tuck in tight rather than roam open water."
     },
     {
       "id": "muskego-point",
-      "why": "Main-lake point with deep water close, a muskie target Monday evening before the storms."
+      "why": "Deep water close to a main-lake point is a classic post-front muskie and smallmouth setup once skies clear."
+    },
+    {
+      "id": "vermilion-dam-rapids",
+      "why": "Current seams hold up better than open water the day after rain, and flow is likely elevated from the storm."
+    },
+    {
+      "id": "hump-oaknarrows-south",
+      "why": "Combines current with structure at 18-22 ft, a strong post-front pairing."
     }
   ],
   "spot_notes": [
     {
       "id": "niles-basin",
-      "note": "Deep mud fits the lead-core fish at 20 to 30 ft. Troll it on calm Sunday or Monday midday if the reefs are slow; less of a dusk spot."
+      "note": "Deep mud basin at 28-34 ft. Post-front, roaming basin walleye can go quiet for a day; lead-core is still a good way to cover water if the reefs are fishing tough."
     },
     {
       "id": "oak-narrows",
-      "note": "Sand-to-rock transition at 8 to 16 ft with current. Today's SE wind and tonight's rain help it; a top dusk choice Sunday and Monday."
+      "note": "Sand-to-rock current seam at 8-16 ft. Current concentrates bait right now while the lake resets after the front; a solid bet for tighter, structure-hugging fish."
     },
     {
       "id": "big-bay-reefs",
-      "note": "Reefs at 12 to 18 ft are in the heart of the reported zone. Lindy rig the reef bases by day, slip bobber on the tops at dusk."
+      "note": "Rock reefs at 12-18 ft. Post-front fish sit tighter to the rock than mid-water; slow down and work the reef edge itself rather than the open flat beside it."
     },
     {
       "id": "stuntz-bay",
-      "note": "Weeds are fading as water cools. A sheltered fallback if today's gusts are too much; check the nearest rock break."
+      "note": "Weed points at 8-15 ft. Weeds are thinning fast with the cooling water; fish the remaining green edges and the inside turns rather than open weed flats."
     },
     {
       "id": "black-bay",
-      "note": "Shallow and weedy, so walleye are short here now. Worth muskie casts Monday afternoon before the front."
+      "note": "Shallow weedy bay, 2-8 ft. Muskie can still fire here in the afternoon warm-up, but walleye will be tough this shallow with clearing skies and cold nights."
     },
     {
       "id": "wakemup-bay",
-      "note": "Sand-to-rock break at 8 to 16 ft matches the west-end sand pattern at 10 to 20 ft. Jig and crawler along the break Sunday and Monday."
+      "note": "Sand-to-rock break at 8-16 ft. A tighter, slower presentation on the break itself should out-produce open sand the day after a front like this."
     },
     {
       "id": "everett-bay",
-      "note": "Shallow and sheltered: a windy-day or panfish option. Walleye here likely only at dusk."
+      "note": "Sheltered shallow bay, 8-14 ft. Good backup if wind stays up behind the front; otherwise a dusk-only walleye bet with perch and crappie shallower."
     },
     {
       "id": "muskego-point",
-      "note": "Point with deep water close. Cast the wind-facing side for muskie Monday late afternoon, ahead of the storms."
+      "note": "Main-lake point, 6-25 ft, deep water close to shore. Classic post-front muskie and smallmouth spot once the sun gets on it and clears; fish the point through midday."
     },
     {
       "id": "vermilion-dam-rapids",
-      "note": "Current seam that can pick up after tonight's and Tuesday's rain. Low-light walleye and smallmouth, not the main pattern."
+      "note": "Current seam at the outlet, 4-12 ft. Rain likely bumped flow here; current seams like this stay productive even when the rest of the lake goes quiet after a front."
     },
     {
       "id": "hump-everett-open",
-      "note": "A 20 ft top with a deeper break fits the deep rock edges reported. Vertical jig the edges by day; calm Sunday and Monday make boat control easy."
+      "note": "Open-water hump, top near 20 ft. A good default today: fish tuck to structure like this after a front rather than roaming open water. Slow vertical presentation over the top."
     },
     {
       "id": "hump-stuntz-north",
-      "note": "A 15 ft top in the middle of the 12 to 25 ft zone. Leech on a slip bobber at dusk, jig the edges midday."
+      "note": "Hump top near 15 ft. Sits in the transition zone guides have reported; work it slowly today rather than trolling past it."
     },
     {
       "id": "hump-central-north",
-      "note": "A 20 ft top toward the deep end of the pattern. Good for lead-core or vertical jigging if fish hold deeper in bright calm weather."
+      "note": "Open-water hump, top near 20 ft, on the deeper side. Good if fish pushed deeper behind the front; try lead-core or a deep crankbait."
     },
     {
       "id": "hump-frazer",
-      "note": "A 15 ft top at transition depth. Jig and crawler or leech on the crown, then work the break; good in calm conditions."
+      "note": "Hump top near 15 ft. Straightforward jig-and-crawler or leech spot; nothing about this week's weather rules it out."
     },
     {
       "id": "hump-wakemup-north",
-      "note": "West-end 15 ft top near the reported 12 to 30 ft rock edges. Jig and crawler, or slow-troll a crankbait at dusk."
+      "note": "Hump top near 15 ft on the west end. Same tight, slow approach as the rest of the humps today; work the crown down to the break."
     },
     {
       "id": "hump-niles-north",
-      "note": "A 20 ft top near the mud basin. Bottom bouncer and spinner or lead-core around it midday."
+      "note": "Open-water hump, top near 20 ft, in the mud-basin area. A lead-core or bottom-bouncer pass here can find fish that scattered off the basin after the front."
     },
     {
       "id": "hump-stuntz-northeast",
-      "note": "A 20 ft top with a deeper break. Vertical jig or deep crankbait at 18 to 22 ft if fish are on deep edges."
+      "note": "Hump top near 20 ft with a deeper break. Vertical jig the break at 18-22 ft; a good choice if the wind is still up from the front."
     },
     {
       "id": "pike-bay",
-      "note": "Under 5 ft, so walleye are unlikely. Cooling nights will push fish out; muskie or panfish only."
+      "note": "Very shallow, 1-5 ft. Cooling water and clearing skies push fish out of water this shallow; only worth a stop for muskie or panfish right now."
     },
     {
       "id": "armstrong-bay",
-      "note": "Shallow-to-moderate bay. Sheltered from today's SE wind; jig and crawler on transitions, best at dusk."
+      "note": "Shallow-to-moderate bay, 8-15 ft. A calm-day, low-light option; not the first choice with a post-front bite still settling."
     },
     {
       "id": "norwegian-bay",
-      "note": "The 12 to 20 ft edge lines up with reported depths. Walleye on the deep edge, muskie on weed lines Monday before the front."
+      "note": "Bay edge at 12-20 ft. Walleye on the deeper edge fits a post-front, tight-to-structure pattern; muskie may still work the weed line midday."
     },
     {
       "id": "head-of-lakes-bay",
-      "note": "Flat beside deep water: test 8 to 30 ft in one stop. Start on the break, shallower at dusk."
+      "note": "Shallow flat next to deep water, 8-30 ft. Good today specifically because you can fish the break itself and slide deeper if shallow is dead after the front."
     },
     {
       "id": "white-eagle-bay",
-      "note": "Same flat-to-deep setup as Head of the Lakes. A good place to hunt depth until you mark fish."
+      "note": "Same setup as Head of the Lakes: flat beside deep water. Work the break and adjust depth until you mark fish."
     },
     {
       "id": "greenwood-bay",
-      "note": "Sand or rock transitions at moderate depth. A solid dusk stop Sunday or Monday; jig and crawler at 8 to 15 ft."
+      "note": "Shallow-to-moderate bay, 8-15 ft. A dusk-only bet this week; daytime fish are likely holding tighter to structure after the front."
     },
     {
       "id": "waconda-bay",
-      "note": "The 10 to 20 ft edge is inside the pattern. If fish suspend off the flat, lead-core or a spinner covers water."
+      "note": "Bay edge at 10-20 ft. If fish are off the flat and suspended, a lead-core or spinner pass can find them post-front."
     },
     {
       "id": "hump-far-west",
-      "note": "Shallowest hump, top near 10 ft. Best at dusk on calm Sunday and Monday evenings with a slip bobber."
+      "note": "Shallowest hump, top near 10 ft. Best right at dusk when fish move up; a slow jig or slip bobber is the play today."
     },
     {
       "id": "hump-norwegian-open",
-      "note": "A 15 ft top. Leech on a slip bobber on the top and edges at dusk, or slow-troll a crankbait midday."
+      "note": "Hump top near 15 ft. Slip bobber with a leech, or a slow troll over the top; nothing in the forecast rules this one out."
     },
     {
       "id": "hump-everett-south",
-      "note": "East-side 15 ft top. Jig and crawler or slip bobber with a leech in low light."
+      "note": "Hump top near 15 ft on the east side. Same tight, slow presentation as the other humps while the bite resets after the front."
     },
     {
       "id": "hump-oaknarrows-south",
-      "note": "A 20 ft top near the Oak Narrows current. Lead-core or vertical jig at 18 to 22 ft; pairs well with a dusk move to Oak Narrows."
+      "note": "Hump top near 20 ft by the Oak Narrows current. Current plus structure is a strong combination the day after rain; work 18-22 ft."
     },
     {
       "id": "hump-frazer-central",
-      "note": "A 15 ft top. Troll or vertical-jig the top and break; fits the 12 to 25 ft transition pattern."
+      "note": "Hump top near 15 ft. Troll or vertical-jig the top and break; a steady, low-risk pick this week."
     },
     {
       "id": "hump-bigbay-north",
-      "note": "A 15 ft reef near Big Bay. Slip bobber with a jumbo leech on the edge; easy to combine with the Big Bay reefs."
+      "note": "Reef-like hump near Big Bay, top near 15 ft. Same slip-bobber-on-the-edge approach as Big Bay itself."
     }
   ],
   "confidence": "medium",
-  "caveats": "Only one recent guide report (Sept 23) and no measured water temperature since late August. Phase and turnover timing are inferred from the calendar and forecast. Little has changed since the previous outlook earlier today beyond today's wind and a cool Sunday night."
+  "caveats": "No fresh guide report or water temperature since Sept 23; this outlook leans on the weather and barometer pattern, not new catch reports. Season phase and turnover timing are inference, not a measurement."
 };
