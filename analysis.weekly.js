@@ -1,176 +1,176 @@
 // Written by Claude (an AI model) in a Claude Code session, from the app's season model,
 // the latest guide report, the NWS forecast and the barometer trend, plus the angler's own
-// on-the-water report. Overwritten each refresh. app.js labels it as AI-written and ignores
+// on-the-water reports. Overwritten each refresh. app.js labels it as AI-written and ignores
 // it after 10 days.
 const WEEKLY_ANALYSIS = {
-  "generatedAt": "2026-10-01T01:04:17Z",
+  "generatedAt": "2026-10-02T12:52:48Z",
   "model": "claude-sonnet-5 (written by Claude in a Claude Code session)",
   "seasonPhase": "Early fall (cooling, pre-turnover)",
-  "waterTempEstimateF": 55,
+  "waterTempEstimateF": 53,
   "waterTempSource": "seasonal average",
-  "headline": "Re-checked: best depth matches to today's fish, cooldown still the trigger to watch",
-  "season_read": "Re-pulled everything: no new guide report (still Sept 23 - walleye on 12-25 ft transitions, fall bite building), forecast unchanged, and the barometer is still on its slow post-front rise (now near 1007 hPa). The one real signal is still your own report - heavy marks on 20-30 ft flats today, tough bite under warm, stable, bright conditions.",
+  "headline": "Hard frost overnight, high pressure building fast - fish push deep today",
+  "season_read": "The predicted hard freeze arrived: around 34F at the Cook station early this morning with patchy frost. The barometer has jumped to roughly 1024 hPa and is still climbing - strong, building high pressure behind the week's front. Still no new guide report (last one Sept 23); the daily scraper checked again this morning and found nothing new.",
   "patterns": [
     {
-      "title": "Depth match re-checked across all 29 spots",
-      "detail": "Went spot by spot against today's confirmed 20-30 ft fish depth. Head of the Lakes Bay and White Eagle Bay (8-30 ft) overlap the whole zone; four humps with 18-26 ft tops overlap 6 ft of it. Shallower bays and current seams (8-16 ft) don't overlap at all and were dropped from the top picks."
+      "title": "Bright, calm, high pressure pushes fish deep (inference)",
+      "detail": "Clear skies, light wind and a strong, rising barometer are the classic conditions that push fish tight to the deepest nearby structure rather than roaming or holding shallow. Favor the 18-26 ft humps and the deep basin over shallow bays and open flats today."
     },
     {
-      "title": "Species check",
-      "detail": "Today's basin flat fish are most likely walleye. Muskego Point, a strong wind-loading spot for tomorrow, holds only muskie and smallmouth - demoted from the top list since it doesn't match today's species as well as the walleye-depth humps and flats."
+      "title": "Frosty mornings, warm windows midday",
+      "detail": "Expect a slow start right after the frost breaks, with the better bite building as the sun warms the water through midday. First light is still worth fishing shallow weed edges and current before the sky goes fully bright and calm."
     },
     {
-      "title": "Cooldown still the trigger (inference)",
-      "detail": "Nothing about the forecast changed on this re-check: a sharp cooldown and building west then northwest wind tomorrow should be what turns today's neutral, deep-flat fish into biters, more than any change of location."
+      "title": "Short warm-up, then cold again",
+      "detail": "Temperatures climb back into the upper 50s through Monday with another rain chance Saturday, then another hard frost Sunday night (low 33) and Monday morning. Expect this bright-calm, then front, then bright-calm cycle to repeat a few more times before real turnover."
     },
     {
-      "title": "Hard freeze still coming",
-      "detail": "Lows near 30 Thursday and Sunday nights with widespread frost are unchanged from the last check. Keep pushing the pattern toward turnover; nothing here contradicts that."
+      "title": "Pattern still cooling toward turnover (inference)",
+      "detail": "Two hard frosts within a week is a faster cooldown than early September saw. Nothing is confirmed yet, but each cold snap moves the lake closer to mixing; keep checking your sonar for even temperatures top to bottom."
     }
   ],
-  "turnover_watch": "Unchanged from the last check: not confirmed, but the cooldown is sharp enough (lows near 30 twice this week) that it's worth watching closely. If the bite stays tough on these best-depth-match spots even after tomorrow's cooldown, or marks start scattering, that leans toward turnover starting.",
-  "weather_outlook": "Re-confirmed, unchanged: cooling fast tonight (low 45), Thursday sunny but cooler (58) with building 5-15 mph west wind, Thursday night the sharpest drop (37, northwest wind). Friday patchy frost then sun (56). Rain returns Saturday, widespread frost Sunday night (low 30). Barometer continues its slow rise, now near 1007 hPa.",
-  "best_windows": "Tomorrow afternoon, once west wind has built and temps are falling, is still the best window - fish the depth-matched spots above rather than today's exact locations if they weren't one of them. Dusk tomorrow into the front night should be strongest for walleye.",
+  "turnover_watch": "Not confirmed. Two frosty mornings in a week point toward faster cooling than typical early fall. If deep structure like the picks above goes quiet the same day the lake looks stirred up or discolored, or your sonar shows even temperature top to bottom, that's the turnover signal to watch for.",
+  "weather_outlook": "Today: patchy frost early, then sunny and mild, high 57, light NW wind. Mild and mostly calm through the weekend with a rain chance Saturday (high 58). Sunday clears and cools hard again (low 33, frost). Monday frost then sun (58). Warms back up Tuesday-Wednesday (64-66). Barometer is high and still rising, around 1024 hPa this morning.",
+  "best_windows": "First light today, right as the frost breaks, before skies go fully bright and calm - work shallow weed edges and current areas then. Through midday and afternoon, favor the deep humps and basin while the high-pressure bluebird pattern holds. Watch for Saturday's rain as the next pre-front window, then expect another frosty, bright-calm reset Sunday into Monday.",
   "top_spots": [
     {
-      "id": "head-of-lakes-bay",
-      "why": "Best depth match on the lake (8-30 ft spans the full 20-30 ft zone) to today's confirmed fish; fish the deep side of the break."
-    },
-    {
-      "id": "white-eagle-bay",
-      "why": "Same flat-beside-deep-water setup as Head of the Lakes, matching today's confirmed 20-30 ft fish as well as any spot on the lake."
-    },
-    {
       "id": "hump-central-north",
-      "why": "20 ft hump top on the deep side of its range, a close depth match to today's fish; well positioned for tomorrow's cooldown-driven bite."
+      "why": "20 ft hump top - bright, calm, high and rising pressure pushes fish down onto deep structure exactly like this."
     },
     {
       "id": "hump-everett-open",
-      "why": "20 ft hump top overlapping today's confirmed fish depth; a defined structure top is where post-front fish tuck in tight."
+      "why": "Same depth, same logic: a defined deep top is where fish sit tight under today's clear, calm high pressure."
+    },
+    {
+      "id": "hump-niles-north",
+      "why": "Deep hump in the basin area; a strong match for fish pushed deep by today's building high pressure."
     },
     {
       "id": "hump-oaknarrows-south",
-      "why": "Matches today's confirmed depth and adds current, a strong combination once wind and cooling build tomorrow."
+      "why": "Combines a deep structure top with current, a strong pairing on a calm, bright day with no wind to load bait elsewhere."
+    },
+    {
+      "id": "niles-basin",
+      "why": "Deep mud basin at 28-34 ft; the deepest option on the lake fits today's bright, calm, high-pressure pattern well."
     }
   ],
   "spot_notes": [
     {
       "id": "niles-basin",
-      "note": "Deep mud basin at 28-34 ft, the closest literal match to \"flats\" among the bay spots and right where fish were marked thick today. Slightly deeper than the core 20-30 ft zone, so work the shallow end of the basin first."
+      "note": "Deep mud basin at 28-34 ft. High, rising pressure and bright, calm skies push basin fish deep and tight; this is a good default today, worked slowly."
     },
     {
       "id": "oak-narrows",
-      "note": "Current seam at 8-16 ft, well shallower than today's confirmed 20-30 ft fish. Current areas can wake up as wind builds tomorrow, but this is a secondary option behind the deeper flats and humps."
+      "note": "Current seam at 8-16 ft. Current keeps producing even in calm, high-pressure bluebird conditions; a solid daytime option while open water goes quiet."
     },
     {
       "id": "big-bay-reefs",
-      "note": "Rock reefs at 12-18 ft, outside today's confirmed depth. Reasonable once the bite spreads shallower behind the cooldown, but not where the fish are known to be right now."
+      "note": "Rock reefs at 12-18 ft. Clear, calm, high-pressure days push fish tight to the reef itself rather than roaming the flat beside it; fish the edge slowly."
     },
     {
       "id": "stuntz-bay",
-      "note": "Weed points at 8-15 ft. Outside today's fish zone; weeds are also thinning with cooling water. A lower-priority option this week."
+      "note": "Weed points at 8-15 ft. Remaining weed edges are worth a look at first light before the sun gets up and skies go bright and calm."
     },
     {
       "id": "black-bay",
-      "note": "Shallow weedy bay, 2-8 ft. Not a match for today's deep-flat fish; a muskie-only look before the cold fully sets in."
+      "note": "Shallow weedy bay, 2-8 ft. A frosty morning followed by a calm, bright, warming afternoon can still pull muskie shallow for a window at midday."
     },
     {
       "id": "wakemup-bay",
-      "note": "Sand-to-rock break at 8-16 ft, shallower than today's confirmed fish. Lower priority until the bite moves shallower."
+      "note": "Sand-to-rock break at 8-16 ft. Fish the break tight and slow; bright, calm, high-pressure days are tougher here than on windy ones."
     },
     {
       "id": "everett-bay",
-      "note": "Sheltered shallow bay, 8-14 ft. Outside the confirmed depth; a dusk-only backup, not a primary pick this week."
+      "note": "Sheltered shallow bay, 8-14 ft. Likely slow under calm, bright skies; best at first light right after this morning's frost, before the sun warms the shallows."
     },
     {
       "id": "muskego-point",
-      "note": "Main-lake point, 6-25 ft, muskie and smallmouth only - no walleye, which is what today's flat fish most likely are. Still worth a look as wind shifts W then NW and loads bait onto it, but a secondary pick behind the walleye-depth spots."
+      "note": "Main-lake point, 6-25 ft, muskie and smallmouth. Calm and bright with no wind to load bait isn't ideal here; best early, before the day fully brightens."
     },
     {
       "id": "vermilion-dam-rapids",
-      "note": "Current seam at the outlet, 4-12 ft, well shallower than today's fish. Keep as a current-area backup, not a top pick this week."
+      "note": "Current seam at the outlet, 4-12 ft. Current areas hold up well in calm, high-pressure stretches; worth a stop any time of day."
     },
     {
       "id": "hump-everett-open",
-      "note": "Open-water hump, top near 20 ft (18-26 ft range) - strong overlap with today's confirmed 20-30 ft fish. A defined structure top is exactly where post-front fish tuck in; a top pick for tomorrow's cooldown-driven bite."
+      "note": "Open-water hump, top near 20 ft. Bright, calm, high and rising pressure is exactly when fish push down onto structure like this; a strong pick today."
     },
     {
       "id": "hump-stuntz-north",
-      "note": "Hump top near 15 ft (12-21 ft range) - only brushes the bottom of today's 20-30 ft zone. Worth a pass but not as strong a depth match as the deeper humps."
+      "note": "Hump top near 15 ft. A fine option today, though the deeper humps below are a tighter match for how deep fish should be sitting under this bright, calm high."
     },
     {
       "id": "hump-central-north",
-      "note": "Open-water hump, top near 20 ft (18-26 ft range), on the deep side - one of the best depth matches to today's confirmed fish. A top pick as falling temps and wind trigger the bite tomorrow."
+      "note": "Open-water hump, top near 20 ft, on the deep side. One of the better picks today: bright, calm, high pressure pushes fish to exactly this kind of deep structure."
     },
     {
       "id": "hump-frazer",
-      "note": "Hump top near 15 ft (12-21 ft range), only brushing today's confirmed depth. A fine backup, not a top pick this refresh."
+      "note": "Hump top near 15 ft. Solid backup; the deeper humps are the sharper match for today's bright, calm, high-pressure pattern."
     },
     {
       "id": "hump-wakemup-north",
-      "note": "Hump top near 15 ft on the west end, only brushing today's confirmed depth. Lower priority than the deeper humps this week."
+      "note": "Hump top near 15 ft on the west end. A fine option; deeper structure is the better bet while skies stay clear and calm."
     },
     {
       "id": "hump-niles-north",
-      "note": "Open-water hump, top near 20 ft (18-26 ft range), in the same mud-basin area holding fish today. A strong depth match for tomorrow as temps crash."
+      "note": "Open-water hump, top near 20 ft, in the mud-basin area. A strong pick today as fish push deep under the building high pressure."
     },
     {
       "id": "hump-stuntz-northeast",
-      "note": "Hump top near 20 ft with a deeper break (18-26 ft) - matches today's flat fish depth well. A solid alternate to the main picks, especially working the break at 18-22 ft."
+      "note": "Hump top near 20 ft with a deeper break. Work the break at 18-22 ft; a good match for fish sitting deep under today's bright, calm skies."
     },
     {
       "id": "pike-bay",
-      "note": "Very shallow, 1-5 ft. No overlap with today's deep flat fish; a muskie or panfish stop only."
+      "note": "Very shallow, 1-5 ft. Cold, frosty mornings and bright, calm afternoons both push fish away from water this shallow; muskie-only interest at best."
     },
     {
       "id": "armstrong-bay",
-      "note": "Shallow-to-moderate bay, 8-15 ft. Outside today's confirmed depth; the deeper humps and flats are the stronger plays this week."
+      "note": "Shallow-to-moderate bay, 8-15 ft. Best at first light before the sun and calm skies take hold; a lower-priority spot through midday."
     },
     {
       "id": "norwegian-bay",
-      "note": "Bay edge at 12-20 ft, just touching the bottom of today's zone. A reasonable walleye option on the deepest part of the edge, but not a top pick."
+      "note": "Bay edge at 12-20 ft. The deeper edge is the better part of this bay today; muskie may still work the weed line early before full sun."
     },
     {
       "id": "head-of-lakes-bay",
-      "note": "Shallow flat next to deep water, 8-30 ft - the single best depth overlap on the lake with today's confirmed 20-30 ft fish. Fish the deep side of the break; a top pick for tomorrow."
+      "note": "Shallow flat next to deep water, 8-30 ft. Start on the deep side of the break today - bright, calm, high pressure pushes fish down, not up onto the flat."
     },
     {
       "id": "white-eagle-bay",
-      "note": "Same setup as Head of the Lakes: flat beside deep water, 8-30 ft, matching today's confirmed depth as well as any spot on the lake. Work the deep break."
+      "note": "Same setup as Head of the Lakes: fish the deep side of the break first under today's clear, calm, high-pressure skies."
     },
     {
       "id": "greenwood-bay",
-      "note": "Shallow-to-moderate bay, 8-15 ft. Outside today's confirmed depth; a dusk-only backup this week."
+      "note": "Shallow-to-moderate bay, 8-15 ft. A first-light option only; midday bright and calm conditions favor the deeper humps and flats."
     },
     {
       "id": "waconda-bay",
-      "note": "Bay edge at 10-20 ft, just touching the bottom of today's zone. Worth a look if fish are suspended off the flat, but not a top pick."
+      "note": "Bay edge at 10-20 ft. If fish are off the flat and suspended, this can produce, but the deeper humps are a stronger bet under today's high pressure."
     },
     {
       "id": "hump-far-west",
-      "note": "Shallowest hump, top near 10 ft. No overlap with today's confirmed fish; best at dusk regardless of the cooldown."
+      "note": "Shallowest hump, top near 10 ft. Best at dawn right after this morning's frost breaks, before skies go fully bright and calm."
     },
     {
       "id": "hump-norwegian-open",
-      "note": "Hump top near 15 ft (12-21 ft range), only brushing today's confirmed depth. A fine secondary pick."
+      "note": "Hump top near 15 ft. A reasonable option; the deeper humps better match where fish should sit today."
     },
     {
       "id": "hump-everett-south",
-      "note": "Hump top near 15 ft on the east side, only brushing today's confirmed depth. A fine secondary pick, not a top pick this refresh."
+      "note": "Hump top near 15 ft on the east side. Fine backup behind the deeper humps given today's bright, calm, high-pressure pattern."
     },
     {
       "id": "hump-oaknarrows-south",
-      "note": "Hump top near 20 ft (18-26 ft range) right next to the Oak Narrows current - strong depth overlap with today's fish plus the extra pull of current. A top pick for tomorrow's windier, cooling conditions."
+      "note": "Hump top near 20 ft next to the Oak Narrows current. Current plus a deep structure top is a strong combination on a calm, bright, high-pressure day like today."
     },
     {
       "id": "hump-frazer-central",
-      "note": "Hump top near 15 ft (12-21 ft range), only brushing today's confirmed depth. A steady but secondary pick this week."
+      "note": "Hump top near 15 ft. Steady option; the deeper humps are the sharper pick while the high builds in."
     },
     {
       "id": "hump-bigbay-north",
-      "note": "Reef-like hump near Big Bay, top near 15 ft, only brushing today's confirmed depth. A secondary pick behind the deeper humps and flats."
+      "note": "Reef-like hump near Big Bay, top near 15 ft. Fish it like the Big Bay reefs - tight and slow under today's bright, calm skies."
     }
   ],
-  "confidence": "medium-high",
-  "caveats": "Re-ran against the same underlying data (no new guide report or measured water temperature since Sept 23, forecast and barometer trend unchanged). What changed here is a stricter depth-and-species match against your report, not new facts."
+  "confidence": "medium",
+  "caveats": "No new guide report or measured water temperature since Sept 23; the water temperature and the bright-calm-pushes-fish-deep call are both inference from the weather pattern, not a direct observation."
 };
