@@ -4,6 +4,13 @@
 // scraped directly from each guide's own site — no AI summarizing involved.
 const AUTO_REPORTS = [
   {
+    "date": "2026-10-02",
+    "source": "Patriot Guide Service (Justin Chromy)",
+    "sourceUrl": "https://www.patriotguideserviceoflakevermilion.com/10-02-26-lake-vermilion-fishing-report/",
+    "waterTempF": null,
+    "rawText": "This is likely the last written fishing report of the season for me. If you follow me on YouTube, I’ll try to get one more video out yet. Thank you all for making the 2026 guide season the best one I’ve ever had! EAST END WALLEYES: The best luck we’ve had in the past week has been on the sides and bottoms of rocks in 12 to 20 feet of water. Minnows have overall started to outproduce crawlers on the Lindy Rigs and jigs, but there are still times and places where the worms work better. Moving often is important to find the right group of fish that are willing to bite. There are several other patterns that will work as well, per usual for late September, early October. With water temps in the low 60s, it won’t be long before fish stack up in the deep holes and are easy to catch. WEST END WALLEYES: Walleye fishing continues to be good for us on the west end. The best bite is on deeper rocks in 25 to 30 feet with a jig and a minnow. Catching a few fish on a spot and moving on from there is pretty normal. Most of these fish are of the 13 inch variety, with some larger ones and slot fish mixed in. Nicer sized walleyes are on the sand in front of weed-lines in 12 to 20 feet. While these fish are picky at times, we have gotten them to bite with a jig/minnow, jig/crawler, and Lindy Rigs with minnows or crawlers as well. This has been a good fall bite on Lake Vermilion, and I expect the bite to continue to improve as we go further into October! Unfortunately for me, life calls and I only have a couple of trips left. I would like to thank everyone for their support. You really helped make this guide season something special. I’m looking forward to another great summer in 2027."
+  },
+  {
     "date": "2026-09-23",
     "source": "Patriot Guide Service (Justin Chromy)",
     "sourceUrl": "https://www.patriotguideserviceoflakevermilion.com/09-23-26-lake-vermilion-fishing-report/",
