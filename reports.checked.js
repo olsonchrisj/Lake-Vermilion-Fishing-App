@@ -2,7 +2,7 @@
 // (unlike reports.auto.js, which only changes when new report content is found).
 // Use this to confirm the daily refresh actually ran, independent of whether
 // either guide had posted anything new.
-const REPORTS_CHECKED_AT = "2026-10-26T18:29:56.284Z";
+const REPORTS_CHECKED_AT = "2026-10-27T17:45:12.785Z";
 const REPORTS_CHECK_STATUS = [
   {
     "source": "Fishing with Z",
